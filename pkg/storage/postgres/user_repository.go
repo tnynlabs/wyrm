@@ -31,7 +31,34 @@ func (uR *UserRepository) GetByKey(key string) (*users.User, error) {
 }
 
 func (uR *UserRepository) Create(u users.User) (*users.User, error) {
-	return nil, nil
+	u.CreatedAt = time.Now()
+
+	userData := fromUser(u)
+
+	const insertUserStmt = `
+		INSERT INTO users (
+			name, email, display_name, auth_key,
+			pwd_hash, pwd_salt, created_at
+		) VALUES (
+			:name, :email, :display_name, :auth_key,
+			:pwd_hash, :pwd_salt, :created_at
+		) RETURNING id`
+
+	query, args, err := sqlx.Named(insertUserStmt, userData)
+	if err != nil {
+		return nil, err
+	}
+
+	// https://pkg.go.dev/github.com/jmoiron/sqlx#Rebind
+	// Replace ? with $ for postgres
+	query = sqlx.Rebind(sqlx.DOLLAR, query)
+
+	err = uR.db.Get(&u.ID, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &u, nil
 }
 
 func (uR *UserRepository) Update(u users.User) (*users.User, error) {
@@ -44,12 +71,28 @@ func (uR *UserRepository) Delete(userID int64) error {
 
 // TODO: cache for fast checks
 func (uR *UserRepository) IsDuplicateEmail(email string) (bool, error) {
-	return false, nil
+	const lookupEmailStmt = `SELECT COUNT(id) FROM users WHERE email = $1`
+
+	var cnt int
+	err := uR.db.Get(&cnt, lookupEmailStmt, email)
+	if err != nil {
+		return true, err
+	}
+
+	return (cnt != 0), nil
 }
 
 // TODO: cache for fast checks
 func (uR *UserRepository) IsDuplicateName(name string) (bool, error) {
-	return false, nil
+	const lookupNameStmt = `SELECT COUNT(id) FROM users WHERE name = $1`
+
+	var cnt int
+	err := uR.db.Get(&cnt, lookupNameStmt, name)
+	if err != nil {
+		return true, err
+	}
+
+	return (cnt != 0), nil
 }
 
 type userSQL struct {

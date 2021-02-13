@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/tnynlabs/wyrm/pkg/users"
+	"github.com/tnynlabs/wyrm/pkg/utils"
+
+	"github.com/go-chi/render"
 )
 
 // UserHandler user rest handler
@@ -18,7 +21,37 @@ func CreateUserHandler(userService users.Service) UserHandler {
 }
 
 func (h *UserHandler) RegisterWithPwd(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "welcome\n")
+	req := registerPwdRequest{}
+
+	err := render.DecodeJSON(r.Body, &req)
+	if err != nil {
+		sendError(w, r, invalidJSONErr, http.StatusBadRequest)
+		return
+	}
+
+	userData := users.User{
+		Name:        req.Name,
+		DisplayName: req.DisplayName,
+		Email:       req.Email,
+	}
+
+	user, err := h.userService.CreateWithPwd(userData, req.Pwd)
+	if err != nil {
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case users.InvalidInputCode, users.DuplicateEmailCode, users.DuplicateNameCode:
+			sendError(w, r, *serviceErr, http.StatusBadRequest)
+		default:
+			sendError(w, r, unexpectedErr, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	result := &map[string]interface{}{
+		"user": fromUser(*user),
+	}
+
+	sendResponse(w, r, result)
 }
 
 func (h *UserHandler) LoginWithEmailPwd(w http.ResponseWriter, r *http.Request) {
@@ -79,4 +112,11 @@ func fromUser(u users.User) *userRest {
 	}
 
 	return &uRest
+}
+
+type registerPwdRequest struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+	Email       string `json:"email"`
+	Pwd         string `json:"password"`
 }

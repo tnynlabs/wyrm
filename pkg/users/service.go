@@ -4,7 +4,11 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"log"
+	"regexp"
 	"time"
+
+	"github.com/tnynlabs/wyrm/pkg/utils"
 )
 
 const minPwdLength = 8
@@ -84,7 +88,62 @@ func (s *service) GetByID(userID int64) (*User, error) {
 }
 
 func (s *service) CreateWithPwd(u User, pwd string) (*User, error) {
-	return nil, nil
+	if u.Name == "" {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid name",
+		}
+	}
+
+	if u.DisplayName == "" {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid display name",
+		}
+	}
+
+	if !isStrongPwd(pwd) {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Weak password",
+		}
+	}
+
+	if !isValidEmail(u.Email) {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid email",
+		}
+	}
+
+	if dup, err := s.userRepo.IsDuplicateEmail(u.Email); err != nil || dup {
+		return nil, &utils.ServiceErr{
+			Code:    DuplicateEmailCode,
+			Message: "User with this email already exists",
+		}
+	}
+
+	if dup, err := s.userRepo.IsDuplicateName(u.Name); err != nil || dup {
+		return nil, &utils.ServiceErr{
+			Code:    DuplicateNameCode,
+			Message: "User with this name already exists",
+		}
+	}
+
+	u.setPwd(pwd)
+	u.AuthKey = genString(64) // Let's hope no collisions lol
+
+	newUser, err := s.userRepo.Create(u)
+	if err != nil {
+		// TODO: better error handling
+		log.Printf("Failed creating new user (error: %v)", err)
+		return nil, &utils.ServiceErr{
+			Code:    utils.UnexpectedCode,
+			Message: "Failed creating new user",
+		}
+	}
+
+	return newUser, nil
 }
 
 func (s *service) Update(userID int64, u User) (*User, error) {
@@ -97,6 +156,29 @@ func (s *service) Delete(userID int64) error {
 
 func (s *service) AuthWithEmailPwd(email, pwd string) (*User, error) {
 	return nil, nil
+}
+
+func isStrongPwd(pwd string) bool {
+	if len(pwd) < minPwdLength {
+		return false
+	}
+
+	if matched, err := regexp.MatchString("[0-9]", pwd); err != nil || !matched {
+		return false
+	}
+
+	if matched, err := regexp.MatchString("[a-zA-Z]", pwd); err != nil || !matched {
+		return false
+	}
+
+	return true
+}
+
+func isValidEmail(email string) bool {
+	// https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address
+	// https://github.com/badoux/checkmail/blob/master/checkmail.go
+	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	return re.MatchString(email)
 }
 
 func genString(size int) string {
