@@ -55,7 +55,40 @@ func (h *UserHandler) RegisterWithPwd(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) LoginWithEmailPwd(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "welcome\n")
+	req := loginEmailPwdRequest{}
+
+	err := render.DecodeJSON(r.Body, &req)
+	if err != nil {
+		sendError(w, r, invalidJSONErr, http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.userService.AuthWithEmailPwd(req.Email, req.Pwd)
+	if err != nil {
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case users.InvalidInputCode:
+			sendError(w, r, *serviceErr, http.StatusUnauthorized)
+		default:
+			sendError(w, r, unexpectedErr, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// TODO: add SecureOnly
+	authKeyCookie := http.Cookie{
+		Name:     "auth_key",
+		Value:    user.AuthKey,
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, &authKeyCookie)
+
+	result := &map[string]interface{}{
+		"user": fromUser(*user),
+	}
+
+	sendResponse(w, r, result)
 }
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -119,4 +152,9 @@ type registerPwdRequest struct {
 	DisplayName string `json:"display_name"`
 	Email       string `json:"email"`
 	Pwd         string `json:"password"`
+}
+
+type loginEmailPwdRequest struct {
+	Email string `json:"email"`
+	Pwd   string `json:"password"`
 }

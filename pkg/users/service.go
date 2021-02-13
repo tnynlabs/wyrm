@@ -155,7 +155,22 @@ func (s *service) Delete(userID int64) error {
 }
 
 func (s *service) AuthWithEmailPwd(email, pwd string) (*User, error) {
-	return nil, nil
+	user, err := s.userRepo.GetByEmail(email)
+	if err != nil {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid email or password",
+		}
+	}
+
+	if !user.isValidPwd(pwd) {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid email or password",
+		}
+	}
+
+	return user, nil
 }
 
 func isStrongPwd(pwd string) bool {
