@@ -25,7 +25,7 @@ func (h *UserHandler) RegisterWithPwd(w http.ResponseWriter, r *http.Request) {
 
 	err := render.DecodeJSON(r.Body, &req)
 	if err != nil {
-		sendError(w, r, invalidJSONErr, http.StatusBadRequest)
+		SendInvalidJSONErr(w, r)
 		return
 	}
 
@@ -40,9 +40,9 @@ func (h *UserHandler) RegisterWithPwd(w http.ResponseWriter, r *http.Request) {
 		serviceErr := utils.ToServiceErr(err)
 		switch serviceErr.Code {
 		case users.InvalidInputCode, users.DuplicateEmailCode, users.DuplicateNameCode:
-			sendError(w, r, *serviceErr, http.StatusBadRequest)
+			SendError(w, r, *serviceErr, http.StatusBadRequest)
 		default:
-			sendError(w, r, unexpectedErr, http.StatusInternalServerError)
+			SendUnexpectedErr(w, r)
 		}
 		return
 	}
@@ -51,7 +51,7 @@ func (h *UserHandler) RegisterWithPwd(w http.ResponseWriter, r *http.Request) {
 		"user": fromUser(*user),
 	}
 
-	sendResponse(w, r, result)
+	SendResponse(w, r, result)
 }
 
 func (h *UserHandler) LoginWithEmailPwd(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +59,7 @@ func (h *UserHandler) LoginWithEmailPwd(w http.ResponseWriter, r *http.Request) 
 
 	err := render.DecodeJSON(r.Body, &req)
 	if err != nil {
-		sendError(w, r, invalidJSONErr, http.StatusBadRequest)
+		SendInvalidJSONErr(w, r)
 		return
 	}
 
@@ -68,9 +68,9 @@ func (h *UserHandler) LoginWithEmailPwd(w http.ResponseWriter, r *http.Request) 
 		serviceErr := utils.ToServiceErr(err)
 		switch serviceErr.Code {
 		case users.InvalidInputCode:
-			sendError(w, r, *serviceErr, http.StatusUnauthorized)
+			SendError(w, r, *serviceErr, http.StatusUnauthorized)
 		default:
-			sendError(w, r, unexpectedErr, http.StatusInternalServerError)
+			SendUnexpectedErr(w, r)
 		}
 		return
 	}
@@ -88,7 +88,7 @@ func (h *UserHandler) LoginWithEmailPwd(w http.ResponseWriter, r *http.Request) 
 		"user": fromUser(*user),
 	}
 
-	sendResponse(w, r, result)
+	SendResponse(w, r, result)
 }
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {

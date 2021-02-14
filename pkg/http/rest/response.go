@@ -18,7 +18,7 @@ type response struct {
 	Err    *restErr                `json:"error"`
 }
 
-func sendResponse(w http.ResponseWriter, r *http.Request, result *map[string]interface{}) {
+func SendResponse(w http.ResponseWriter, r *http.Request, result *map[string]interface{}) {
 	resp := response{
 		Result: result,
 		Err:    nil,
@@ -27,7 +27,7 @@ func sendResponse(w http.ResponseWriter, r *http.Request, result *map[string]int
 	render.JSON(w, r, resp)
 }
 
-func sendError(w http.ResponseWriter, r *http.Request, err utils.ServiceErr, status int) {
+func SendError(w http.ResponseWriter, r *http.Request, err utils.ServiceErr, status int) {
 	resp := response{
 		Result: nil,
 		Err: &restErr{
@@ -39,12 +39,20 @@ func sendError(w http.ResponseWriter, r *http.Request, err utils.ServiceErr, sta
 	render.JSON(w, r, resp)
 }
 
-var unexpectedErr = utils.ServiceErr{
-	Code:    utils.UnexpectedCode,
-	Message: "An unexpected error occurred",
+func SendUnexpectedErr(w http.ResponseWriter, r *http.Request) {
+	unexpectedErr := utils.ServiceErr{
+		Code:    utils.UnexpectedCode,
+		Message: "An unexpected error occurred",
+	}
+
+	SendError(w, r, unexpectedErr, http.StatusInternalServerError)
 }
 
-var invalidJSONErr = utils.ServiceErr{
-	Code:    "INVALID_JSON",
-	Message: "Invalid json",
+func SendInvalidJSONErr(w http.ResponseWriter, r *http.Request) {
+	invalidJSONErr := utils.ServiceErr{
+		Code:    "INVALID_JSON",
+		Message: "Invalid json",
+	}
+
+	SendError(w, r, invalidJSONErr, http.StatusBadRequest)
 }
