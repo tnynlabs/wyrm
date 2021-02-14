@@ -80,7 +80,15 @@ func CreateService(repo Repository) Service {
 }
 
 func (s *service) GetByKey(key string) (*User, error) {
-	return nil, nil
+	user, err := s.userRepo.GetByKey(key)
+	if err != nil {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid Key",
+		}
+	}
+
+	return user, nil
 }
 
 func (s *service) GetByID(userID int64) (*User, error) {

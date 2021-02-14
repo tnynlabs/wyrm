@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/tnynlabs/wyrm/pkg/http/rest"
+	"github.com/tnynlabs/wyrm/pkg/http/rest/middleware"
 	"github.com/tnynlabs/wyrm/pkg/storage/postgres"
 	"github.com/tnynlabs/wyrm/pkg/users"
 
@@ -45,6 +46,9 @@ func main() {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/register", userHandler.RegisterWithPwd)
 		r.Post("/login", userHandler.LoginWithEmailPwd)
+
+		r.Use(middleware.Auth(userService))
+
 		r.Route("/users/{userID}", func(r chi.Router) {
 			r.Get("/", userHandler.Get)
 			r.Patch("/", userHandler.Update)
