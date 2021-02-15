@@ -1,1 +1,0 @@
-go run cmd/db-init/main.go

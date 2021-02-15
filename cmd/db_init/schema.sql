@@ -1,7 +1,7 @@
 /* Users Table */
 CREATE TABLE IF NOT EXISTS users
 (
- "id"           int NOT NULL,
+ "id"         bigserial NOT NULL,
  email        text NOT NULL,
  name         text NOT NULL,
  display_name text NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users
  pwd_hash     text NULL,
  pwd_salt     text NULL,
  created_at   date NOT NULL,
- updated_at   date NOT NULL,
+ updated_at   date,
  CONSTRAINT PK_users PRIMARY KEY ( "id" )
 );
 
