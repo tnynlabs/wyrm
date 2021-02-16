@@ -101,8 +101,39 @@ func (uR *UserRepository) Create(u users.User) (*users.User, error) {
 	return &u, nil
 }
 
-func (uR *UserRepository) Update(u users.User) (*users.User, error) {
-	return nil, nil
+func (uR *UserRepository) Update(userID int64, u users.User) (*users.User, error) {
+	u.ID = userID
+	u.UpdatedAt = time.Now()
+
+	userData := fromUser(u)
+
+	const updateUserStmt = `
+		UPDATE users
+		SET
+			email			= COALESCE(:email, email),
+			display_name	= COALESCE(:display_name, display_name),
+			auth_key		= COALESCE(:auth_key, auth_key),
+			pwd_hash		= COALESCE(:pwd_hash, pwd_hash),
+			pwd_salt		= COALESCE(:pwd_salt, pwd_salt),
+			updated_at		= :updated_at
+		WHERE id = :id;`
+
+	result, err := uR.db.NamedExec(updateUserStmt, userData)
+	if err != nil {
+		return nil, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil || rowsAffected != 1 {
+		return nil, errors.New("Invalid ID")
+	}
+
+	user, err := uR.GetByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (uR *UserRepository) Delete(userID int64) error {

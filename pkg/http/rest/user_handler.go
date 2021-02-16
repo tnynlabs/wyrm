@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -126,7 +125,41 @@ func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "welcome\n")
+	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		SendError(w, r, invalidIDErr, http.StatusNotFound)
+		return
+	}
+
+	userData := userRest{}
+	err = render.DecodeJSON(r.Body, &userData)
+	if err != nil {
+		SendInvalidJSONErr(w, r)
+		return
+	}
+
+	// No need to check that only updatable fields are used because
+	// toUser() only uses updatable fields and discards the rest.
+	// Also user service should discard non-updatable fields.
+	user, err := h.userService.Update(userID, *toUser(userData))
+	if err != nil {
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case users.InvalidInputCode:
+			SendError(w, r, *serviceErr, http.StatusBadRequest)
+		case users.UserNotFoundCode:
+			SendError(w, r, *serviceErr, http.StatusNotFound)
+		default:
+			SendUnexpectedErr(w, r)
+		}
+		return
+	}
+
+	result := &map[string]interface{}{
+		"user": fromUser(*user),
+	}
+
+	SendResponse(w, r, result)
 }
 
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -165,9 +198,6 @@ type userRest struct {
 func toUser(uRest userRest) *users.User {
 	var u users.User
 
-	if uRest.Name != nil {
-		u.Name = *uRest.Name
-	}
 	if uRest.Email != nil {
 		u.Email = *uRest.Email
 	}

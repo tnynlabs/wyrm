@@ -49,7 +49,7 @@ type Repository interface {
 	GetByEmail(email string) (*User, error)
 	GetByKey(key string) (*User, error)
 	Create(u User) (*User, error)
-	Update(u User) (*User, error)
+	Update(userID int64, u User) (*User, error)
 	Delete(userID int64) error
 
 	// Check if email already exists
@@ -163,7 +163,35 @@ func (s *service) CreateWithPwd(u User, pwd string) (*User, error) {
 }
 
 func (s *service) Update(userID int64, u User) (*User, error) {
-	return nil, nil
+	if u.DisplayName == "" {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid display name",
+		}
+	}
+
+	if !isValidEmail(u.Email) {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid email",
+		}
+	}
+
+	// Initialize updatable fields only
+	updatedData := User{
+		Email:       u.Email,
+		DisplayName: u.DisplayName,
+	}
+
+	user, err := s.userRepo.Update(userID, updatedData)
+	if err != nil {
+		return nil, &utils.ServiceErr{
+			Code:    UserNotFoundCode,
+			Message: "Invalid ID",
+		}
+	}
+
+	return user, nil
 }
 
 func (s *service) Delete(userID int64) error {
