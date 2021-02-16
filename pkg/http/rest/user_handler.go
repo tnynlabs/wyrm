@@ -96,11 +96,7 @@ func (h *UserHandler) LoginWithEmailPwd(w http.ResponseWriter, r *http.Request) 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
 	if err != nil {
-		serviceErr := utils.ServiceErr{
-			Code:    users.UserNotFoundCode,
-			Message: "Invalid ID (IDs should be integers)",
-		}
-		SendError(w, r, serviceErr, http.StatusNotFound)
+		SendError(w, r, invalidIDErr, http.StatusNotFound)
 		return
 	}
 
@@ -134,7 +130,25 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "welcome\n")
+	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		SendError(w, r, invalidIDErr, http.StatusNotFound)
+		return
+	}
+
+	err = h.userService.Delete(int64(userID))
+	if err != nil {
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case users.UserNotFoundCode:
+			SendError(w, r, *serviceErr, http.StatusNotFound)
+		default:
+			SendUnexpectedErr(w, r)
+		}
+		return
+	}
+
+	SendResponse(w, r, nil)
 }
 
 type userRest struct {
@@ -191,4 +205,9 @@ type registerPwdRequest struct {
 type loginEmailPwdRequest struct {
 	Email string `json:"email"`
 	Pwd   string `json:"password"`
+}
+
+var invalidIDErr = utils.ServiceErr{
+	Code:    users.UserNotFoundCode,
+	Message: "Invalid ID (IDs should be integers)",
 }

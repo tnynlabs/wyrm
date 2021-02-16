@@ -167,6 +167,14 @@ func (s *service) Update(userID int64, u User) (*User, error) {
 }
 
 func (s *service) Delete(userID int64) error {
+	err := s.userRepo.Delete(userID)
+	if err != nil {
+		return &utils.ServiceErr{
+			Code:    UserNotFoundCode,
+			Message: "Invalid ID",
+		}
+	}
+
 	return nil
 }
 

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -19,7 +20,7 @@ func CreateUserRepository(db *sqlx.DB) users.Repository {
 }
 
 func (uR *UserRepository) GetByID(userID int64) (*users.User, error) {
-	const getByEmailStmt = `
+	const getByIDStmt = `
 		SELECT
 			id, email, name, display_name, auth_key,
 			pwd_hash, pwd_salt, created_at, updated_at
@@ -27,7 +28,7 @@ func (uR *UserRepository) GetByID(userID int64) (*users.User, error) {
 		WHERE id = $1`
 
 	var userData userSQL
-	err := uR.db.Get(&userData, getByEmailStmt, userID)
+	err := uR.db.Get(&userData, getByIDStmt, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func (uR *UserRepository) GetByEmail(email string) (*users.User, error) {
 }
 
 func (uR *UserRepository) GetByKey(key string) (*users.User, error) {
-	const getByEmailStmt = `
+	const getByKeyStmt = `
 		SELECT
 			id, email, name, display_name, auth_key,
 			pwd_hash, pwd_salt, created_at, updated_at
@@ -61,7 +62,7 @@ func (uR *UserRepository) GetByKey(key string) (*users.User, error) {
 		WHERE auth_key = $1`
 
 	var userData userSQL
-	err := uR.db.Get(&userData, getByEmailStmt, key)
+	err := uR.db.Get(&userData, getByKeyStmt, key)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +106,20 @@ func (uR *UserRepository) Update(u users.User) (*users.User, error) {
 }
 
 func (uR *UserRepository) Delete(userID int64) error {
+	const deleteUserStmt = `
+		DELETE FROM users
+		WHERE id = $1`
+
+	result, err := uR.db.Exec(deleteUserStmt, userID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil || rowsAffected != 1 {
+		return errors.New("Invalid ID")
+	}
+
 	return nil
 }
 
