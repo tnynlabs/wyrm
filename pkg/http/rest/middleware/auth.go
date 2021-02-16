@@ -28,7 +28,7 @@ func Auth(userService users.Service) func(next http.Handler) http.Handler {
 			if err != nil {
 				serviceErr := utils.ToServiceErr(err)
 				switch serviceErr.Code {
-				case users.InvalidInputCode:
+				case users.UserNotFoundCode:
 					rest.SendError(w, r, *serviceErr, http.StatusUnauthorized)
 				default:
 					rest.SendUnexpectedErr(w, r)

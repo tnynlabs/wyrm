@@ -83,7 +83,7 @@ func (s *service) GetByKey(key string) (*User, error) {
 	user, err := s.userRepo.GetByKey(key)
 	if err != nil {
 		return nil, &utils.ServiceErr{
-			Code:    InvalidInputCode,
+			Code:    UserNotFoundCode,
 			Message: "Invalid Key",
 		}
 	}
@@ -92,7 +92,15 @@ func (s *service) GetByKey(key string) (*User, error) {
 }
 
 func (s *service) GetByID(userID int64) (*User, error) {
-	return nil, nil
+	user, err := s.userRepo.GetByID(userID)
+	if err != nil {
+		return nil, &utils.ServiceErr{
+			Code:    UserNotFoundCode,
+			Message: "Invalid ID",
+		}
+	}
+
+	return user, nil
 }
 
 func (s *service) CreateWithPwd(u User, pwd string) (*User, error) {

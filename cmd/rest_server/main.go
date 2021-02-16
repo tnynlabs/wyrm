@@ -47,9 +47,8 @@ func main() {
 		r.Post("/register", userHandler.RegisterWithPwd)
 		r.Post("/login", userHandler.LoginWithEmailPwd)
 
-		r.Use(middleware.Auth(userService))
-
 		r.Route("/users/{userID}", func(r chi.Router) {
+			r.Use(middleware.Auth(userService))
 			r.Get("/", userHandler.Get)
 			r.Patch("/", userHandler.Update)
 			r.Delete("/", userHandler.Delete)

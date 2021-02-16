@@ -3,11 +3,13 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/tnynlabs/wyrm/pkg/users"
 	"github.com/tnynlabs/wyrm/pkg/utils"
 
+	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
 
@@ -92,7 +94,39 @@ func (h *UserHandler) LoginWithEmailPwd(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "welcome\n")
+	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		serviceErr := utils.ServiceErr{
+			Code:    users.UserNotFoundCode,
+			Message: "Invalid ID (IDs should be integers)",
+		}
+		SendError(w, r, serviceErr, http.StatusNotFound)
+		return
+	}
+
+	user, err := h.userService.GetByID(int64(userID))
+	if err != nil {
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case users.UserNotFoundCode:
+			SendError(w, r, *serviceErr, http.StatusNotFound)
+		default:
+			SendUnexpectedErr(w, r)
+		}
+		return
+	}
+
+	userData := fromUser(*user)
+	// omit sensitive values
+	userData.CreatedAt = nil
+	userData.UpdatedAt = nil
+	userData.Email = nil
+
+	result := &map[string]interface{}{
+		"user": userData,
+	}
+
+	SendResponse(w, r, result)
 }
 
 func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -104,12 +138,12 @@ func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 type userRest struct {
-	ID          *int64     `json:"id"`
-	Name        *string    `json:"name"`
-	CreatedAt   *time.Time `json:"created_at"`
+	ID          *int64     `json:"id,omitempty"`
+	Name        *string    `json:"name,omitempty"`
+	CreatedAt   *time.Time `json:"created_at,omitempty"`
 	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
-	Email       *string    `json:"email"`
-	DisplayName *string    `json:"display_name"`
+	Email       *string    `json:"email,omitempty"`
+	DisplayName *string    `json:"display_name,omitempty"`
 }
 
 // toUser maps userRest (json request) to users.User type

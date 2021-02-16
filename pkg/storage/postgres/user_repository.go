@@ -19,7 +19,20 @@ func CreateUserRepository(db *sqlx.DB) users.Repository {
 }
 
 func (uR *UserRepository) GetByID(userID int64) (*users.User, error) {
-	return nil, nil
+	const getByEmailStmt = `
+		SELECT
+			id, email, name, display_name, auth_key,
+			pwd_hash, pwd_salt, created_at, updated_at
+		FROM users
+		WHERE id = $1`
+
+	var userData userSQL
+	err := uR.db.Get(&userData, getByEmailStmt, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return toUser(userData), nil
 }
 
 func (uR *UserRepository) GetByEmail(email string) (*users.User, error) {
