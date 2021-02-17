@@ -1,39 +1,28 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/tnynlabs/wyrm/pkg/storage/postgres"
+
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 )
 
 func main() {
+	// Load environment variables from .env file
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Error loading .env file (error: %v)", err)
 	}
 
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-	schemaPath := os.Getenv("DB_SCHEMA_PATH")
-
-	psqlInfo := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname,
-	)
-
-	db, err := sqlx.Connect("postgres", psqlInfo)
+	db, err := postgres.GetFromEnv()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Error loading db instance (error: %v)", err)
 	}
 
+	schemaPath := os.Getenv("DB_SCHEMA_PATH")
 	schemaGenQuery, err := ioutil.ReadFile(schemaPath)
 	if err != nil {
 		log.Fatalf("Error loading schema file (%s) (error: %v)", schemaPath, err)
