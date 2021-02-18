@@ -16,12 +16,12 @@ CREATE TABLE IF NOT EXISTS users
 /* Projects Table */
 CREATE TABLE IF NOT EXISTS projects
 (
- "id"           int NOT NULL,
+ "id"           bigserial NOT NULL,
  created_by   int NOT NULL,
  display_name text NOT NULL,
  description  text NULL,
  created_at   date NOT NULL,
- updated_at   date NOT NULL,
+ updated_at   date,
  CONSTRAINT PK_projects PRIMARY KEY ( "id" ),
  CONSTRAINT FK_34 FOREIGN KEY ( created_by ) REFERENCES users ( "id" )
 );

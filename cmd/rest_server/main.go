@@ -5,15 +5,15 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/tnynlabs/wyrm/pkg/devices"
-	"github.com/tnynlabs/wyrm/pkg/http/rest"
-	"github.com/tnynlabs/wyrm/pkg/http/rest/middleware"
-	"github.com/tnynlabs/wyrm/pkg/storage/postgres"
-	"github.com/tnynlabs/wyrm/pkg/users"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+	"github.com/tnynlabs/wyrm/pkg/devices"
+	"github.com/tnynlabs/wyrm/pkg/http/rest"
+	"github.com/tnynlabs/wyrm/pkg/http/rest/middleware"
+	"github.com/tnynlabs/wyrm/pkg/projects"
+	"github.com/tnynlabs/wyrm/pkg/storage/postgres"
+	"github.com/tnynlabs/wyrm/pkg/users"
 )
 
 func main() {
@@ -31,6 +31,10 @@ func main() {
 	userRepo := postgres.CreateUserRepository(db)
 	userService := users.CreateService(userRepo)
 	userHandler := rest.CreateUserHandler(userService)
+
+	projectRepo := postgres.CreateProjectRepository(db)
+	projectService := projects.CreateService(projectRepo)
+	projectHandler := rest.CreateProjectHandler(projectService)
 
 	deviceRepo := postgres.CreateDeviceRepository(db)
 	deviceService := devices.CreateDeviceService(deviceRepo)
@@ -57,9 +61,16 @@ func main() {
 			r.Get("/", userHandler.Get)
 			r.Patch("/", userHandler.Update)
 			r.Delete("/", userHandler.Delete)
-		})
 
+			r.Post("/projects", projectHandler.Create)
+			r.Get("/projects", projectHandler.GetAllowed)
+		})
 		r.Route("/projects/{projectID}", func(r chi.Router) {
+			r.Use(middleware.Auth(userService))
+			r.Get("/", projectHandler.Get)
+			r.Patch("/", projectHandler.Update)
+			r.Delete("/", projectHandler.Delete)
+
 			r.Post("/devices", deviceHandler.Create)
 			r.Get("/devices", deviceHandler.GetByProjectID)
 		})
