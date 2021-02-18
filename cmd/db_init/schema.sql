@@ -34,13 +34,13 @@ CREATE INDEX IF NOT EXISTS fkIdx_35 ON projects
 /* Devices Table */
 CREATE TABLE IF NOT EXISTS devices
 (
- "id"           int NOT NULL,
+ "id"         bigserial NOT NULL,
  project_id   int NOT NULL,
  display_name text NOT NULL,
  auth_key     text NOT NULL,
  description  text NULL,
  created_at   date NOT NULL,
- updated_at   date NOT NULL,
+ updated_at   date,
  CONSTRAINT PK_devices PRIMARY KEY ( "id" ),
  CONSTRAINT FK_37 FOREIGN KEY ( project_id ) REFERENCES projects ( "id" )
 );

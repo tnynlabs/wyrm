@@ -55,6 +55,8 @@ func main() {
 		})
 	})
 
+	deviceRepo := postgres.CreateDeviceRepository(db)
+
 	log.Println("Server running...")
 	http.ListenAndServe(":8080", r)
 }
