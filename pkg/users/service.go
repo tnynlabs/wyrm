@@ -1,7 +1,6 @@
 package users
 
 import (
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"log"
@@ -34,7 +33,7 @@ type User struct {
 // setPwd generates a salted hash of the password
 // and fills PwdSalt and PwdHash accordingly
 func (u *User) setPwd(pwd string) {
-	u.PwdSalt = genString(8)
+	u.PwdSalt = utils.GenString(8)
 	u.PwdHash = genPwdHash(pwd, u.PwdSalt)
 }
 
@@ -147,7 +146,7 @@ func (s *service) CreateWithPwd(u User, pwd string) (*User, error) {
 	}
 
 	u.setPwd(pwd)
-	u.AuthKey = genString(64) // Let's hope no collisions lol
+	u.AuthKey = utils.GenString(64) // Let's hope no collisions lol
 
 	newUser, err := s.userRepo.Create(u)
 	if err != nil {
@@ -246,12 +245,6 @@ func isValidEmail(email string) bool {
 	// https://github.com/badoux/checkmail/blob/master/checkmail.go
 	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 	return re.MatchString(email)
-}
-
-func genString(size int) string {
-	randBytes := make([]byte, size)
-	rand.Read(randBytes)
-	return base64.StdEncoding.EncodeToString(randBytes)
 }
 
 func genPwdHash(pwd, salt string) string {

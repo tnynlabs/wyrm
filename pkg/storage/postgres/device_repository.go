@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -16,7 +15,8 @@ type DeviceRepository struct {
 
 func (dR *DeviceRepository) GetByID(deviceID int64) (*devices.Device, error) {
 	const sqlStmt = `
-	SELECT * FROM Devices
+	SELECT project_id, display_name, auth_key, description, created_at
+	FROM Devices
 	WHERE id = $1 `
 	var deviceData deviceSQL
 	err := dR.db.Get(&deviceData, sqlStmt, deviceID)
@@ -45,7 +45,6 @@ func (dR *DeviceRepository) Create(d devices.Device) (*devices.Device, error) {
 
 	// https://pkg.go.dev/github.com/jmoiron/sqlx#Rebind
 	// Replace ? with $ for postgres
-	fmt.Printf(query)
 	query = sqlx.Rebind(sqlx.DOLLAR, query)
 
 	err = dR.db.Get(&d.ID, query, args...)
@@ -110,7 +109,8 @@ func (dR DeviceRepository) Delete(deviceID int64) error {
 func (dR DeviceRepository) GetByProjectID(projectID int64) ([]devices.Device, error) {
 	devicesSQL := []deviceSQL{}
 	const sqlStmt = `
-		SELECT FROM devices
+		SELECT project_id, display_name, auth_key, description, created_at 
+		FROM devices
 		WHERE project_id = $1
 	`
 	err := dR.db.Select(&devicesSQL, sqlStmt, projectID)
