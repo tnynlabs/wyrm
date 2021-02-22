@@ -33,7 +33,7 @@ func main() {
 
 	projectRepo := postgres.CreateProjectRepository(db)
 	projectService := projects.CreateService(projectRepo)
-	projectHandler := rest.CreateProjectHandler(projectService)
+	projectHandler := rest.CreateProjectHandler(projectService, userService)
 
 	r := chi.NewRouter()
 

@@ -4,38 +4,52 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
 	"github.com/tnynlabs/wyrm/pkg/projects"
 	"github.com/tnynlabs/wyrm/pkg/users"
 	"github.com/tnynlabs/wyrm/pkg/utils"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
 
 type ProjectHandler struct {
 	projectService projects.Service
+	userService users.Service
 }
 
-func CreateProjectHandler(projectService projects.Service) ProjectHandler {
-	return ProjectHandler{projectService}
+func CreateProjectHandler(projectService projects.Service, userService users.Service) ProjectHandler {
+	return ProjectHandler{projectService, userService}
 }
+
 func (h *ProjectHandler) GetAllowed(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
 	if err != nil {
 		SendError(w, r, invalidIDErr, http.StatusNotFound)
 		return
 	}
-	projects, err := h.projectService.GetAllowedProjects(userID)
+
+	allowedProjects, err := h.projectService.GetAllowed(userID)
 	if err != nil {
-		SendUnexpectedErr(w, r)
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code{
+		case projects.UserNotFoundCode:
+			SendError(w, r, *serviceErr, http.StatusNotFound)
+		default:
+			SendUnexpectedErr(w, r)
+		}
 		return
 	}
+	
+	restProjects := make([]*projectRest, len(allowedProjects))
+	for i := 0; i < len(allowedProjects); i++ {
+		restProjects[i] = fromProject(allowedProjects[i])
+	}
+
 	result := &map[string]interface{}{
-		"projects": projects,
+		"projects": restProjects,
 	}
 	SendResponse(w, r, result)
 }
+
 func (h *ProjectHandler) Get(w http.ResponseWriter, r *http.Request) {
 	projectID, err := strconv.ParseInt(chi.URLParam(r, "projectID"), 10, 64)
 	if err != nil {
@@ -45,14 +59,22 @@ func (h *ProjectHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	project, err := h.projectService.GetByID(projectID)
 	if err != nil {
-		SendUnexpectedErr(w, r)
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case projects.ProjectNotFoundCode:
+			SendError(w, r, *serviceErr, http.StatusNotFound)
+		default:
+			SendUnexpectedErr(w, r)
+		}
 		return
 	}
+
 	result := &map[string]interface{}{
 		"project": fromProject(*project),
 	}
 	SendResponse(w, r, result)
 }
+
 func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 	projectID, err := strconv.ParseInt(chi.URLParam(r, "projectID"), 10, 64)
 	if err != nil {
@@ -66,6 +88,7 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 		SendInvalidJSONErr(w, r)
 		return
 	}
+
 	project, err := h.projectService.Update(projectID, *toProject(projectData))
 	if err != nil {
 		serviceErr := utils.ToServiceErr(err)
@@ -79,18 +102,20 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	result := &map[string]interface{}{
 		"project": fromProject(*project),
 	}
-
 	SendResponse(w, r, result)
 }
+
 func (h *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	projectID, err := strconv.ParseInt(chi.URLParam(r, "projectID"), 10, 64)
 	if err != nil {
 		SendError(w, r, invalidIDErr, http.StatusNotFound)
 		return
 	}
+
 	err = h.projectService.Delete(int64(projectID))
 	if err != nil {
 		serviceErr := utils.ToServiceErr(err)
@@ -112,20 +137,36 @@ type createProjectRequest struct {
 }
 
 func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
+	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		SendError(w, r, invalidIDErr, http.StatusNotFound)
+		return
+	}
+
+	user, err := h.userService.GetByID(userID)
+	if err != nil {
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case users.UserNotFoundCode:
+			SendError(w, r, *serviceErr, http.StatusNotFound)
+		default:
+			SendUnexpectedErr(w, r)
+		}
+		return
+	}
+
 	req := createProjectRequest{}
-	err := render.DecodeJSON(r.Body, &req)
+	err = render.DecodeJSON(r.Body, &req)
 	if err != nil {
 		SendInvalidJSONErr(w, r)
 		return
 	}
 
-	var user = r.Context().Value(UserCtxKey{}).(*users.User)
 	projectData := projects.Project{
 		DisplayName: req.DisplayName,
 		Description: req.Description,
 		CreatedBy:   user.ID,
 	}
-
 	project, err := h.projectService.Create(projectData)
 	if err != nil {
 		serviceErr := utils.ToServiceErr(err)
@@ -138,6 +179,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	result := &map[string]interface{}{
 		"project": fromProject(*project),
 	}
@@ -155,10 +197,10 @@ type projectRest struct {
 
 func toProject(pRest projectRest) *projects.Project {
 	var p projects.Project
-
 	if pRest.Description != nil {
 		p.Description = *pRest.Description
 	}
+
 	if pRest.DisplayName != nil {
 		p.DisplayName = *pRest.DisplayName
 	}
@@ -178,5 +220,6 @@ func fromProject(p projects.Project) *projectRest {
 	} else {
 		pRest.UpdatedAt = nil
 	}
+	
 	return &pRest
 }
