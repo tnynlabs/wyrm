@@ -2,9 +2,7 @@ package projects
 
 import (
 	"log"
-	// "regexp"
 	"time"
-
 	"github.com/tnynlabs/wyrm/pkg/utils"
 )
 
@@ -20,8 +18,7 @@ type Project struct {
 
 type Repository interface {
 	GetByID(projectID int64) (*Project, error)
-	// GetByCreatorID(CreatorID int64) (*Project, error)
-	GetAllowedProjects(userID int64) (*[]Project, error)
+	GetAllowed(userID int64) ([]Project, error)
 	Create(p Project) (*Project, error)
 	Update(projectID int64, p Project) (*Project, error)
 	Delete(projectID int64) error
@@ -29,8 +26,7 @@ type Repository interface {
 
 type Service interface {
 	GetByID(projectID int64) (*Project, error)
-	// GetByCreatorID(CreatorID int64) (*Project, error)
-	GetAllowedProjects(userID int64) (*[]Project, error)
+	GetAllowed(userID int64) ([]Project, error)
 	Create(p Project) (*Project, error)
 	Update(projectID int64, p Project) (*Project, error)
 	Delete(projectID int64) error
@@ -45,7 +41,6 @@ func CreateService(repo Repository) Service {
 }
 
 func (s *service) GetByID(projectID int64) (*Project, error) {
-	// project, err := s.GetByID()
 	project, err := s.projectRepo.GetByID(projectID)
 	if err != nil {
 		return nil, &utils.ServiceErr{
@@ -57,18 +52,15 @@ func (s *service) GetByID(projectID int64) (*Project, error) {
 	return project, nil
 }
 
-// func (s *service) GetByCreatorID(CreatorID int64) (*Project, error){
-// 	return nil,nil
-// }
-func (s *service) GetAllowedProjects(userID int64) (*[]Project, error) {
-	projects, err := s.projectRepo.GetAllowedProjects(userID)
-
+func (s *service) GetAllowed(userID int64) ([]Project, error) {
+	projects, err := s.projectRepo.GetAllowed(userID)
 	if err != nil {
 		return nil, &utils.ServiceErr{
-			Code:    InvalidInputCode,
-			Message: "Invalid ID",
+			Code:    UserNotFoundCode,
+			Message: "User Not Found",
 		}
 	}
+
 	return projects, nil
 }
 
@@ -88,6 +80,7 @@ func (s *service) Create(p Project) (*Project, error) {
 			Message: "Failed creating new project",
 		}
 	}
+
 	return newProject, nil
 }
 
@@ -98,6 +91,7 @@ func (s *service) Update(projectID int64, p Project) (*Project, error) {
 			Message: "Invalid display name",
 		}
 	}
+
 	updatedData := Project{
 		Description: p.Description,
 		DisplayName: p.DisplayName,
@@ -111,8 +105,8 @@ func (s *service) Update(projectID int64, p Project) (*Project, error) {
 	}
 
 	return project, nil
-
 }
+
 func (s *service) Delete(projectID int64) error {
 	err := s.projectRepo.Delete(projectID)
 	if err != nil {
@@ -121,5 +115,6 @@ func (s *service) Delete(projectID int64) error {
 			Message: "Invalid ID",
 		}
 	}
+	
 	return nil
 }

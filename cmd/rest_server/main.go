@@ -34,7 +34,7 @@ func main() {
 
 	projectRepo := postgres.CreateProjectRepository(db)
 	projectService := projects.CreateService(projectRepo)
-	projectHandler := rest.CreateProjectHandler(projectService)
+	projectHandler := rest.CreateProjectHandler(projectService, userService)
 
 	deviceRepo := postgres.CreateDeviceRepository(db)
 	deviceService := devices.CreateDeviceService(deviceRepo)
