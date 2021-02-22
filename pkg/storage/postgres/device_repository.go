@@ -107,6 +107,25 @@ func (dR DeviceRepository) Delete(deviceID int64) error {
 	return nil
 }
 
+func (dR DeviceRepository) GetByProjectID(projectID int64) (*[]devices.Device, error) {
+	devicesSQL := []deviceSQL{}
+	const sqlStmt = `
+		SELECT FROM devices
+		WHERE project_id = $1
+	`
+	err := dR.db.Select(&devicesSQL, sqlStmt, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	devices := make([]devices.Device, len(devicesSQL))
+	for i := 0; i < len(devicesSQL); i++ {
+		devices[i] = *toDevice(devicesSQL[i])
+	}
+
+	return &devices, nil
+}
+
 func CreateDeviceRepository(db *sqlx.DB) devices.Repository {
 	return &DeviceRepository{db}
 }
@@ -161,27 +180,4 @@ func fromDevice(d devices.Device) *deviceSQL {
 	}
 
 	return &deviceData
-	// return &deviceSQL{
-	// 	ID:        d.ID,
-	// 	CreatedAt: d.CreatedAt,
-	// 	UpdatedAt: sql.NullTime{
-	// 		Time:  d.UpdatedAt,
-	// 		Valid: !d.UpdatedAt.IsZero(),
-	// 	},
-
-	// 	Description: sql.NullString{
-	// 		String: d.Description,
-	// 		Valid:  d.Description != "",
-	// 	},
-	// 	DisplayName: sql.NullString{
-	// 		String: d.DisplayName,
-	// 		Valid:  d.DisplayName != "",
-	// 	},
-	// 	ProjectID: d.ProjectID,
-
-	// 	AuthKey: sql.NullString{
-	// 		String: d.AuthKey,
-	// 		Valid:  d.AuthKey != "",
-	// 	},
-	// }
 }
