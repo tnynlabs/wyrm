@@ -1,6 +1,7 @@
 package devices
 
 import (
+	"log"
 	"time"
 
 	"github.com/tnynlabs/wyrm/pkg/utils"
@@ -29,7 +30,7 @@ type Repository interface {
 	Create(d Device) (*Device, error)
 	Update(deviceID int64, d Device) (*Device, error)
 	Delete(deviceID int64) error
-	GetByProjectID(projectID int64) (*[]Device, error)
+	GetByProjectID(projectID int64) ([]Device, error)
 }
 
 type Service interface {
@@ -37,7 +38,7 @@ type Service interface {
 	Create(d Device) (*Device, error)
 	Update(deviceID int64, d Device) (*Device, error)
 	Delete(deviceID int64) error
-	GetByProjectID(projectID int64) (*[]Device, error)
+	GetByProjectID(projectID int64) ([]Device, error)
 }
 
 type service struct {
@@ -73,15 +74,10 @@ func (s *service) Create(d Device) (*Device, error) {
 }
 
 func (s *service) Update(deviceID int64, d Device) (*Device, error) {
-	if d.DisplayName == "" {
-		return nil, &utils.ServiceErr{
-			Code:    InvalidInputCode,
-			Message: "Invalid display name",
-		}
-	}
-
 	device, err := s.deviceRepo.Update(deviceID, d)
 	if err != nil {
+		log.Println(d)
+		log.Println(err)
 		return nil, &utils.ServiceErr{
 			Code:    InvalidInputCode,
 			Message: "Invalid input",
@@ -99,9 +95,11 @@ func (s *service) Delete(deviceID int64) error {
 			Message: "Invalid Device ID",
 		}
 	}
+
+	return nil
 }
 
-func (s *service) GetByProjectID(projectID int64) (*[]Device, error) {
+func (s *service) GetByProjectID(projectID int64) ([]Device, error) {
 	devices, err := s.deviceRepo.GetByProjectID(projectID)
 	if err != nil {
 		return nil, &utils.ServiceErr{

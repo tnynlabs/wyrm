@@ -107,7 +107,7 @@ func (dR DeviceRepository) Delete(deviceID int64) error {
 	return nil
 }
 
-func (dR DeviceRepository) GetByProjectID(projectID int64) (*[]devices.Device, error) {
+func (dR DeviceRepository) GetByProjectID(projectID int64) ([]devices.Device, error) {
 	devicesSQL := []deviceSQL{}
 	const sqlStmt = `
 		SELECT FROM devices
@@ -123,17 +123,17 @@ func (dR DeviceRepository) GetByProjectID(projectID int64) (*[]devices.Device, e
 		devices[i] = *toDevice(devicesSQL[i])
 	}
 
-	return &devices, nil
+	return devices, nil
 }
 
 func CreateDeviceRepository(db *sqlx.DB) devices.Repository {
 	return &DeviceRepository{db}
 }
 
-//SQL selekton struct for devices
+//SQL skeleton struct for devices
 type deviceSQL struct {
 	ID          int64          `db:"id"`
-	ProjectID   int64          `db:"project_id"`
+	ProjectID   sql.NullInt64  `db:"project_id"`
 	DisplayName sql.NullString `db:"display_name"`
 	AuthKey     sql.NullString `db:"auth_key"`
 	Description sql.NullString `db:"description"`
@@ -150,7 +150,7 @@ func toDevice(dSQL deviceSQL) *devices.Device {
 
 		Description: dSQL.Description.String,
 		DisplayName: dSQL.DisplayName.String,
-		ProjectID:   dSQL.ProjectID,
+		ProjectID:   dSQL.ProjectID.Int64,
 
 		AuthKey: dSQL.AuthKey.String,
 	}
@@ -173,7 +173,10 @@ func fromDevice(d devices.Device) *deviceSQL {
 		String: d.AuthKey,
 		Valid:  d.AuthKey != "",
 	}
-	deviceData.ProjectID = d.ProjectID
+	deviceData.ProjectID = sql.NullInt64{
+		Int64: d.ProjectID,
+		Valid: d.ProjectID != 0,
+	}
 	deviceData.DisplayName = sql.NullString{
 		String: d.DisplayName,
 		Valid:  d.DisplayName != "",
