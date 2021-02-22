@@ -1,0 +1,1 @@
+go run cmd/db_drop_tables/main.go
