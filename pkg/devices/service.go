@@ -1,6 +1,10 @@
 package devices
 
-import "time"
+import (
+	"time"
+
+	"github.com/tnynlabs/wyrm/pkg/utils"
+)
 
 // Device Contains device core properties
 // Note: zero values will not be updated
@@ -25,10 +29,15 @@ type Repository interface {
 	Create(d Device) (*Device, error)
 	Update(deviceID int64, d Device) (*Device, error)
 	Delete(deviceID int64) error
+	GetByProjectID(projectID int64) (*[]Device, error)
 }
 
 type Service interface {
 	GetByID(deviceID int64) (*Device, error)
+	Create(d Device) (*Device, error)
+	Update(deviceID int64, d Device) (*Device, error)
+	Delete(deviceID int64) error
+	GetByProjectID(projectID int64) (*[]Device, error)
 }
 
 type service struct {
@@ -40,5 +49,66 @@ func CreateDeviceService(deviceRepo Repository) Service {
 }
 
 func (s *service) GetByID(deviceID int64) (*Device, error) {
+	device, err := s.deviceRepo.GetByID(deviceID)
+	if err != nil {
+		return nil, &utils.ServiceErr{
+			Code:    DeviceNotFoundCode,
+			Message: "Invalid Device id",
+		}
+	}
 
+	return device, nil
+}
+
+func (s *service) Create(d Device) (*Device, error) {
+	device, err := s.deviceRepo.Create(d)
+	if err != nil {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid input",
+		}
+	}
+
+	return device, nil
+}
+
+func (s *service) Update(deviceID int64, d Device) (*Device, error) {
+	if d.DisplayName == "" {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid display name",
+		}
+	}
+
+	device, err := s.deviceRepo.Update(deviceID, d)
+	if err != nil {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid input",
+		}
+	}
+
+	return device, nil
+}
+
+func (s *service) Delete(deviceID int64) error {
+	err := s.deviceRepo.Delete(deviceID)
+	if err != nil {
+		return &utils.ServiceErr{
+			Code:    DeviceNotFoundCode,
+			Message: "Invalid Device ID",
+		}
+	}
+}
+
+func (s *service) GetByProjectID(projectID int64) (*[]Device, error) {
+	devices, err := s.deviceRepo.GetByProjectID(projectID)
+	if err != nil {
+		return nil, &utils.ServiceErr{
+			Code:    ProjectNotFoundCode,
+			Message: "Invalid Project ID",
+		}
+	}
+
+	return devices, nil
 }
