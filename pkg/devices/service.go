@@ -1,7 +1,6 @@
 package devices
 
 import (
-	"log"
 	"time"
 
 	"github.com/tnynlabs/wyrm/pkg/utils"
@@ -62,6 +61,7 @@ func (s *service) GetByID(deviceID int64) (*Device, error) {
 }
 
 func (s *service) Create(d Device) (*Device, error) {
+	d.AuthKey = utils.GenString(64)
 	device, err := s.deviceRepo.Create(d)
 	if err != nil {
 		return nil, &utils.ServiceErr{
@@ -76,8 +76,6 @@ func (s *service) Create(d Device) (*Device, error) {
 func (s *service) Update(deviceID int64, d Device) (*Device, error) {
 	device, err := s.deviceRepo.Update(deviceID, d)
 	if err != nil {
-		log.Println(d)
-		log.Println(err)
 		return nil, &utils.ServiceErr{
 			Code:    InvalidInputCode,
 			Message: "Invalid input",

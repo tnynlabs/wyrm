@@ -59,6 +59,11 @@ func main() {
 			r.Delete("/", userHandler.Delete)
 		})
 
+		r.Route("/projects/{projectID}", func(r chi.Router) {
+			r.Post("/devices", deviceHandler.Create)
+			r.Get("/devices", deviceHandler.GetByProjectID)
+		})
+
 		r.Route("/devices/{deviceID}", func(r chi.Router) {
 			r.Get("/", deviceHandler.Get)
 			r.Patch("/", deviceHandler.Update)

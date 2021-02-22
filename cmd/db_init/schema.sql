@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS devices
  "id"         bigserial NOT NULL,
  project_id   int NOT NULL,
  display_name text NOT NULL,
- auth_key     text NOT NULL,
+ auth_key     text NOT NULL UNIQUE,
  description  text NULL,
  created_at   date NOT NULL,
  updated_at   date,

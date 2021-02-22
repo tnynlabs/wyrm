@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -39,10 +38,7 @@ func (dHandler *DeviceHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deviceData := FromDevice(*device)
-	// omit sensitive values
-	deviceData.CreatedAt = nil
-	deviceData.UpdatedAt = nil
+	deviceData := fromDevice(*device)
 
 	result := &map[string]interface{}{
 		"device": deviceData,
@@ -78,10 +74,7 @@ func (dHandler *DeviceHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deviceData = FromDevice(*device)
-	// omit sensitive values
-	deviceData.CreatedAt = nil
-	deviceData.UpdatedAt = nil
+	deviceData = fromDevice(*device)
 
 	result := &map[string]interface{}{
 		"device": deviceData,
@@ -105,7 +98,6 @@ func (dHandler *DeviceHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Only updatable fields are set in device object
-	fmt.Println(toDevice(deviceData))
 	device, err := dHandler.deviceService.Update(deviceID, toDevice(deviceData))
 	if err != nil {
 		serviceErr := utils.ToServiceErr(err)
@@ -118,10 +110,7 @@ func (dHandler *DeviceHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deviceData = FromDevice(*device)
-	// omit sensitive values
-	deviceData.CreatedAt = nil
-	deviceData.UpdatedAt = nil
+	deviceData = fromDevice(*device)
 
 	result := map[string]interface{}{
 		"device": deviceData,
@@ -173,7 +162,7 @@ func (dHandler *DeviceHandler) GetByProjectID(w http.ResponseWriter, r *http.Req
 	restDevices := make([]deviceRest, len(projectDevices))
 
 	for i := 0; i < len(projectDevices); i++ {
-		restDevices[i] = FromDevice(projectDevices[i])
+		restDevices[i] = fromDevice(projectDevices[i])
 	}
 
 	result := &map[string]interface{}{
@@ -213,7 +202,7 @@ func toDevice(dRest deviceRest) devices.Device {
 	return d
 }
 
-func FromDevice(d devices.Device) deviceRest {
+func fromDevice(d devices.Device) deviceRest {
 	var dRest deviceRest
 
 	dRest.ID = &d.ID
