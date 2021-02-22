@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/tnynlabs/wyrm/pkg/devices"
 	"github.com/tnynlabs/wyrm/pkg/http/rest"
 	"github.com/tnynlabs/wyrm/pkg/http/rest/middleware"
 	"github.com/tnynlabs/wyrm/pkg/storage/postgres"
@@ -31,6 +32,10 @@ func main() {
 	userService := users.CreateService(userRepo)
 	userHandler := rest.CreateUserHandler(userService)
 
+	deviceRepo := postgres.CreateDeviceRepository(db)
+	deviceService := devices.CreateDeviceService(deviceRepo)
+	deviceHandler := rest.CreateDeviceHandler(deviceService)
+
 	r := chi.NewRouter()
 
 	if devFlag := os.Getenv("WYRM_DEV"); devFlag == "1" {
@@ -53,9 +58,13 @@ func main() {
 			r.Patch("/", userHandler.Update)
 			r.Delete("/", userHandler.Delete)
 		})
-	})
 
-	deviceRepo := postgres.CreateDeviceRepository(db)
+		r.Route("/devices/{deviceID}", func(r chi.Router) {
+			r.Get("/", deviceHandler.Get)
+			r.Patch("/", deviceHandler.Update)
+			r.Delete("/", deviceHandler.Delete)
+		})
+	})
 
 	log.Println("Server running...")
 	http.ListenAndServe(":8080", r)
