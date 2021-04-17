@@ -15,11 +15,25 @@ type DeviceRepository struct {
 
 func (dR *DeviceRepository) GetByID(deviceID int64) (*devices.Device, error) {
 	const sqlStmt = `
-	SELECT project_id, display_name, auth_key, description, created_at
+	SELECT id, project_id, display_name, auth_key, description, created_at
 	FROM Devices
 	WHERE id = $1 `
 	var deviceData deviceSQL
 	err := dR.db.Get(&deviceData, sqlStmt, deviceID)
+	if err != nil {
+		return nil, err
+	}
+
+	return toDevice(deviceData), nil
+}
+
+func (dR *DeviceRepository) GetByKey(authKey string) (*devices.Device, error) {
+	const sqlStmt = `
+	Select id, project_id, display_name, auth_key, description, created_at
+	FROM Devices
+	WHERE auth_key = $1 `
+	var deviceData deviceSQL
+	err := dR.db.Get(&deviceData, sqlStmt, authKey)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +123,7 @@ func (dR DeviceRepository) Delete(deviceID int64) error {
 func (dR DeviceRepository) GetByProjectID(projectID int64) ([]devices.Device, error) {
 	devicesSQL := []deviceSQL{}
 	const sqlStmt = `
-		SELECT project_id, display_name, auth_key, description, created_at 
+		SELECT id, project_id, display_name, auth_key, description, created_at 
 		FROM devices
 		WHERE project_id = $1
 	`
