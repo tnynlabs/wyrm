@@ -27,6 +27,20 @@ func (dR *DeviceRepository) GetByID(deviceID int64) (*devices.Device, error) {
 	return toDevice(deviceData), nil
 }
 
+func (dR *DeviceRepository) GetByKey(authKey string) (*devices.Device, error) {
+	const sqlStmt = `
+	Select project_id, display_name, auth_key, description, created_at
+	FROM Devices
+	WHERE auth_key = $1 `
+	var deviceData deviceSQL
+	err := dR.db.Get(&deviceData, sqlStmt, authKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return toDevice(deviceData), nil
+}
+
 func (dR *DeviceRepository) Create(d devices.Device) (*devices.Device, error) {
 	d.CreatedAt = time.Now()
 

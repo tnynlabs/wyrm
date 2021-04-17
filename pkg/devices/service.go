@@ -26,6 +26,7 @@ type Device struct {
 //Defines devices.Repository for Storage Implementation
 type Repository interface {
 	GetByID(deviceID int64) (*Device, error)
+	GetByKey(authKey string) (*Device, error)
 	Create(d Device) (*Device, error)
 	Update(deviceID int64, d Device) (*Device, error)
 	Delete(deviceID int64) error
@@ -34,6 +35,7 @@ type Repository interface {
 
 type Service interface {
 	GetByID(deviceID int64) (*Device, error)
+	GetByKey(authKey string) (*Device, error)
 	Create(d Device) (*Device, error)
 	Update(deviceID int64, d Device) (*Device, error)
 	Delete(deviceID int64) error
@@ -54,6 +56,18 @@ func (s *service) GetByID(deviceID int64) (*Device, error) {
 		return nil, &utils.ServiceErr{
 			Code:    DeviceNotFoundCode,
 			Message: "Invalid Device id",
+		}
+	}
+
+	return device, nil
+}
+
+func (s *service) GetByKey(authKey string) (*Device, error) {
+	device, err := s.deviceRepo.GetByKey(authKey)
+	if err != nil {
+		return nil, &utils.ServiceErr{
+			Code: DeviceNotFoundCode,
+			Message: "Invalid Auth Key",
 		}
 	}
 
