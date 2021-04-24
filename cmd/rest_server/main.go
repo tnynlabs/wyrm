@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/tnynlabs/wyrm/pkg/devices"
+	"github.com/tnynlabs/wyrm/pkg/endpoints"
 	"github.com/tnynlabs/wyrm/pkg/http/rest"
 	"github.com/tnynlabs/wyrm/pkg/http/rest/middleware"
 	"github.com/tnynlabs/wyrm/pkg/projects"
@@ -39,6 +40,10 @@ func main() {
 	deviceRepo := postgres.CreateDeviceRepository(db)
 	deviceService := devices.CreateDeviceService(deviceRepo)
 	deviceHandler := rest.CreateDeviceHandler(deviceService)
+
+	endpointRepo := postgres.CreateEndpointRepository(db)
+	endpointService := endpoints.CreateEndpointService(endpointRepo)
+	endpointHandler := rest.CreateEndpointHandler(endpointService)
 
 	r := chi.NewRouter()
 
@@ -79,6 +84,15 @@ func main() {
 			r.Get("/", deviceHandler.Get)
 			r.Patch("/", deviceHandler.Update)
 			r.Delete("/", deviceHandler.Delete)
+
+			r.Post("/endpoints", endpointHandler.Create)
+			r.Get("/endpoints", endpointHandler.GetbyDeviceID)
+		})
+
+		r.Route("/endpoints/{endpoint_id}", func(r chi.Router) {
+			r.Get("/", endpointHandler.Get)
+			r.Patch("/", endpointHandler.Update)
+			r.Delete("/", endpointHandler.Delete)
 		})
 	})
 

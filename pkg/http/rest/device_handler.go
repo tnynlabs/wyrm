@@ -170,7 +170,7 @@ func (dHandler *DeviceHandler) GetByProjectID(w http.ResponseWriter, r *http.Req
 	}
 
 	SendResponse(w, r, result)
-	return
+
 }
 
 //Device Json Definition

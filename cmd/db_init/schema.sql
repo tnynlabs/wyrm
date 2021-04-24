@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS endpoints
  description  text NULL,
  "pattern"      text NOT NULL,
  created_at   date NOT NULL,
- updated_at   date NOT NULL,
+ updated_at   date,
  CONSTRAINT PK_endpoints PRIMARY KEY ( "id" ),
  CONSTRAINT FK_48 FOREIGN KEY ( device_id ) REFERENCES devices ( "id" )
 );
