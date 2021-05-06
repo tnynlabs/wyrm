@@ -14,6 +14,7 @@ import (
 	"github.com/tnynlabs/wyrm/pkg/http/rest/middleware"
 	"github.com/tnynlabs/wyrm/pkg/projects"
 	"github.com/tnynlabs/wyrm/pkg/storage/postgres"
+	"github.com/tnynlabs/wyrm/pkg/tunnels"
 	"github.com/tnynlabs/wyrm/pkg/users"
 )
 
@@ -44,6 +45,9 @@ func main() {
 	endpointRepo := postgres.CreateEndpointRepository(db)
 	endpointService := endpoints.CreateEndpointService(endpointRepo)
 	endpointHandler := rest.CreateEndpointHandler(endpointService)
+
+	tunnelService := tunnels.CreateHttpGrpcService("127.0.0.1:9090")
+	grpcHandler := rest.CreateGrpcHandler(tunnelService)
 
 	r := chi.NewRouter()
 
@@ -87,6 +91,8 @@ func main() {
 
 			r.Post("/endpoints", endpointHandler.Create)
 			r.Get("/endpoints", endpointHandler.GetbyDeviceID)
+
+			r.Get("/invoke", grpcHandler.InvokeDevice)
 		})
 
 		r.Route("/endpoints/{endpoint_id}", func(r chi.Router) {
