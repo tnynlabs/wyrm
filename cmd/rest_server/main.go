@@ -39,10 +39,10 @@ func main() {
 
 	if devFlag := os.Getenv("WYRM_DEV"); devFlag == "1" {
 		r.Use(cors.Handler(cors.Options{
-			AllowedOrigins:   []string{"*"},
+			AllowedOrigins:   []string{"http://localhost:3000"},
 			AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 			AllowedHeaders:   []string{"*"},
-			AllowCredentials: false,
+			AllowCredentials: true,
 			MaxAge:           300, // Maximum value not ignored by any of major browsers
 		}))
 	}
@@ -50,6 +50,7 @@ func main() {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/register", userHandler.RegisterWithPwd)
 		r.Post("/login", userHandler.LoginWithEmailPwd)
+		r.Post("/logout", userHandler.Logout)
 
 		r.Route("/users/{userID}", func(r chi.Router) {
 			r.Use(middleware.Auth(userService))
