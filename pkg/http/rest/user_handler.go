@@ -105,6 +105,21 @@ func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := chi.URLParam(r, "userID")
+	if userIDRaw == "me" {
+		// Retrieve all fields
+		user, ok := r.Context().Value(UserCtxKey{}).(*users.User)
+		if !ok {
+			SendUnexpectedErr(w, r)
+			return
+		}
+		result := &map[string]interface{}{
+			"user": fromUser(*user),
+		}
+		SendResponse(w, r, result)
+		return
+	}
+
 	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
 	if err != nil {
 		SendError(w, r, invalidIDErr, http.StatusNotFound)
