@@ -1,0 +1,631 @@
+openapi: 3.0.0
+info:
+  license:
+    name: MIT
+  title: wyrm
+  version: 1.0.0
+servers:
+- url: https://wyrm.io/api/v1
+- url: http://localhost:8080/api/v1
+paths:
+  /login:
+    post:
+      operationId: login_user
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object  
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        "200":
+          description: Set user authentication key in cookies
+          content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      $ref: '#/components/schemas/Error'
+                    user:
+                      $ref: '#/components/schemas/User'
+  /register:
+    post:
+      operationId: register_user
+      tags:
+      - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name:
+                  type: string
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - display_name
+                - email
+                - name
+                - password
+      responses:
+        "200":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  user:
+                    $ref: '#/components/schemas/User'
+  /users/{user_id}:
+    get:
+      operationId: get_user
+      tags:
+      - users
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/UserParam'
+      responses:
+        "200":
+          description: |
+            User found successfully.
+            User returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  user:
+                    $ref: '#/components/schemas/User'
+    delete:
+      operationId: delete_user
+      tags:
+      - users
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/UserParam'
+      responses:
+        "200":
+          description: |
+            User deleted successfully.
+            Empty response returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+    patch:
+      operationId: update_user
+      tags:
+      - users
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/UserParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        "200":
+          description: |
+            User updated successfully.
+            Updated user returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  user:
+                    $ref: '#/components/schemas/User'
+  /users/{user_id}/projects:
+    post:
+      operationId: create_project
+      tags:
+      - projects
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/UserParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name:
+                  type: string
+                description:
+                  type: string
+              required:
+                - display_name
+                - description
+      responses:
+        "200":
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  project:
+                    $ref: '#/components/schemas/Project'
+    get:
+      operationId: get_projects
+      tags:
+      - projects
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/UserParam'
+      responses:
+        "200":
+          description: |
+            User projects returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+  /projects/{project_id}:
+    get:
+      operationId: get_project
+      tags:
+      - projects
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/ProjectParam'
+      responses:
+        "200":
+          description: |
+            Project found successfully.
+            Project returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  project:
+                    $ref: '#/components/schemas/Project'
+    delete:
+      operationId: delete_project
+      tags:
+      - projects
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/ProjectParam'
+      responses:
+        "200":
+          description: |
+            Project deleted successfully.
+            Empty response returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+    patch:
+      operationId: update_project
+      tags:
+      - projects
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/ProjectParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+      responses:
+        "200":
+          description: |
+            Project updated successfully.
+            Updated project returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  project:
+                    $ref: '#/components/schemas/Project'
+  /projects/{project_id}/devices:
+    post:
+      operationId: create_device
+      tags:
+      - devices
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/ProjectParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name:
+                  type: string
+                description:
+                  type: string
+                project_id:
+                  type: integer
+              required:
+                - display_name
+                - description
+      responses:
+        "200":
+          description: Device created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  device:
+                    $ref: '#/components/schemas/Device'
+    get:
+      operationId: get_devices
+      tags:
+      - devices
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/ProjectParam'
+      responses:
+        "200":
+          description: |
+            Project devices returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  devices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Device'
+  /devices/{device_id}:
+    get:
+      operationId: get_device
+      tags:
+      - devices
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceParam'
+      responses:
+        "200":
+          description: |
+            Device found successfully.
+            Device returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  device:
+                    $ref: '#/components/schemas/Device'
+    delete:
+      operationId: delete_device
+      tags:
+      - devices
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceParam'
+      responses:
+        "200":
+          description: |
+            Device deleted successfully.
+            Empty response returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+    patch:
+      operationId: update_device
+      tags:
+      - devices
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        "200":
+          description: |
+            Device updated successfully.
+            Updated device returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  device:
+                    $ref: '#/components/schemas/Device'
+  /devices/{device_id}/invoke/{pattern}:
+    get:
+      operationId: invoke_device
+      tags:
+      - devices
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceParam'
+      - in: path
+        name: pattern
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: |
+            Device invoked successfully.
+            Device response returned.
+          content:
+            application/json:
+              schema:
+                type: string
+  /devices/{device_id}/endpoints:
+    post:
+      operationId: create_endpoint
+      tags:
+      - endpoints
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Endpoint'
+      responses:
+        "200":
+          description: Endpoint created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Endpoint'
+    get:
+      operationId: get_endpoints
+      tags:
+      - endpoints
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceParam'
+      responses:
+        "200":
+          description: |
+            Device endpoints returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Endpoint'
+  /endpoints/{endpoint_id}:
+    get:
+      operationId: get_endpoint
+      tags:
+      - endpoints
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/EndpointParam'
+      responses:
+        "200":
+          description: |
+            Endpoint found successfully.
+            Endpoint returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Endpoint'
+    delete:
+      operationId: delete_endpoint
+      tags:
+      - endpoints
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/EndpointParam'
+      responses:
+        "200":
+          description: |
+            Endpoint deleted successfully.
+            Empty response returned.
+    patch:
+      operationId: update_endpoint
+      tags:
+      - endpoints
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/EndpointParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Endpoint'
+      responses:
+        "200":
+          description: |
+            Endpoint updated successfully.
+            Updated endpoint returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Endpoint'
+components:
+  parameters:
+    UserParam:
+      in: path
+      name: user_id
+      required: true
+      schema:
+        type: integer
+    ProjectParam:
+      in: path
+      name: project_id
+      required: true
+      schema:
+        type: integer
+    DeviceParam:
+      in: path
+      name: device_id
+      required: true
+      schema:
+        type: integer
+    EndpointParam:
+      in: path
+      name: endpoint_id
+      required: true
+      schema:
+        type: integer
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        display_name:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        display_name:
+          type: string
+        description:
+          type: string
+        created_by:
+          type: integer
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    Device:
+      type: object
+      properties:
+        id:
+          type: integer
+        display_name:
+          type: string
+        description:
+          type: string
+        project_id:
+          type: integer
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    Endpoint:
+      type: object
+      properties:
+        id:
+          type: integer
+        display_name:
+          type: string
+        description:
+          type: string
+        device_id:
+          type: integer
+        pattern:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    Error:
+      type: object
+      properties:
+        code:
+          format: int32
+          type: integer
+        message:
+          type: string
+      required:
+      - code
+      - message
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
