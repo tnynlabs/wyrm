@@ -19,7 +19,7 @@ func CreateEndpointRepository(db *sqlx.DB) endpoints.Repository {
 
 func (epR *EndpointRepository) GetByID(endpointID int64) (*endpoints.Endpoint, error) {
 	const sqlStmt = `
-	Select device_id, display_name, description, pattern
+	Select id, device_id, display_name, description, pattern
 	From endpoints
 	where id = $1 `
 	var endpointData endpointSQL
@@ -112,7 +112,7 @@ func (epR *EndpointRepository) Delete(endpointID int64) error {
 func (epR *EndpointRepository) GetbyDeviceID(deviceID int64) ([]endpoints.Endpoint, error) {
 	endpointsSQL := []endpointSQL{}
 	const sqlStmt = `
-	SELECT device_id, display_name, description, pattern
+	SELECT id, device_id, display_name, description, pattern
 	FROM endpoints
 	WHERE device_id = $1
 	`

@@ -6,4 +6,4 @@ protoc \
     --go_opt=paths=source_relative \
     --go-grpc_out=$BASE_PATH \
     --go-grpc_opt=paths=source_relative \
-    $BASE_PATH/tunnel_service/manager/*.proto \
+    $BASE_PATH/tunnels/protobuf/*.proto \
