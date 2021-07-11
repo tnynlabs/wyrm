@@ -46,7 +46,9 @@ func main() {
 	endpointService := endpoints.CreateEndpointService(endpointRepo)
 	endpointHandler := rest.CreateEndpointHandler(endpointService)
 
-	tunnelService := tunnels.CreateHttpGrpcService("127.0.0.1:9090")
+	tunnel_host := os.Getenv("TUNNEL_HOST")
+	tunnel_port := os.Getenv("TUNNEL_PORT")
+	tunnelService := tunnels.CreateHttpGrpcService(tunnel_host + ":" + tunnel_port)
 	grpcHandler := rest.CreateGrpcHandler(tunnelService)
 
 	r := chi.NewRouter()
