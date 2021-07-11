@@ -92,7 +92,7 @@ func main() {
 			r.Post("/endpoints", endpointHandler.Create)
 			r.Get("/endpoints", endpointHandler.GetbyDeviceID)
 
-			r.Get("/invoke", grpcHandler.InvokeDevice)
+			r.Get("/invoke/{pattern}", grpcHandler.InvokeDevice)
 		})
 
 		r.Route("/endpoints/{endpoint_id}", func(r chi.Router) {

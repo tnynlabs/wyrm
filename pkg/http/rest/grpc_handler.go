@@ -1,11 +1,11 @@
 package rest
 
 import (
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
 	"github.com/tnynlabs/wyrm/pkg/tunnels"
 	"github.com/tnynlabs/wyrm/pkg/utils"
 )
@@ -19,20 +19,22 @@ func CreateGrpcHandler(tService tunnels.Service) GrpcHandler {
 }
 
 func (gHandler *GrpcHandler) InvokeDevice(w http.ResponseWriter, r *http.Request) {
+	pattern := chi.URLParam(r, "pattern")
 	deviceID, err := strconv.ParseInt(chi.URLParam(r, "deviceID"), 10, 64)
 	if err != nil {
 		SendError(w, r, invalidIDErr, http.StatusNotFound)
 		return
 	}
 
-	invokeRequest := invokeRequestRest{}
-	err = render.DecodeJSON(r.Body, invokeRequest)
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		SendInvalidJSONErr(w, r)
-		return
+		SendUnexpectedErr(w, r)
 	}
 
-	invokeResponse, err := gHandler.httpGrpcService.InvokeDevice(deviceID, invokeRequest.Pattern, invokeRequest.Data)
+	invokeRequest := string(body[:])
+
+	invokeResponse, err := gHandler.httpGrpcService.InvokeDevice(deviceID, pattern, invokeRequest)
 	if err != nil {
 		serviceErr := utils.ToServiceErr(err)
 		switch serviceErr.Code {
@@ -48,9 +50,4 @@ func (gHandler *GrpcHandler) InvokeDevice(w http.ResponseWriter, r *http.Request
 	}
 
 	SendResponse(w, r, result)
-}
-
-type invokeRequestRest struct {
-	Pattern string `json:"pattern,omitempty"`
-	Data    string `json:"data,omitempty"`
 }
