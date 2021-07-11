@@ -78,9 +78,10 @@ func (h *UserHandler) LoginWithEmailPwd(w http.ResponseWriter, r *http.Request) 
 
 	// TODO: add SecureOnly
 	authKeyCookie := http.Cookie{
-		Name:     "auth_key",
-		Value:    user.AuthKey,
-		HttpOnly: true,
+		Name:		"auth_key",
+		Value:		user.AuthKey,
+		Expires:	time.Now().Add(time.Hour * 42000),
+		HttpOnly:	false,
 	}
 
 	http.SetCookie(w, &authKeyCookie)
@@ -92,7 +93,33 @@ func (h *UserHandler) LoginWithEmailPwd(w http.ResponseWriter, r *http.Request) 
 	SendResponse(w, r, result)
 }
 
+func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	authKeyCookie := http.Cookie{
+		Name:		"auth_key",
+		Expires:	time.Unix(0, 0),
+		HttpOnly:	false,
+	}
+
+	http.SetCookie(w, &authKeyCookie)
+	SendResponse(w, r, nil)
+}
+
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := chi.URLParam(r, "userID")
+	if userIDRaw == "me" {
+		// Retrieve all fields
+		user, ok := r.Context().Value(UserCtxKey{}).(*users.User)
+		if !ok {
+			SendUnexpectedErr(w, r)
+			return
+		}
+		result := &map[string]interface{}{
+			"user": fromUser(*user),
+		}
+		SendResponse(w, r, result)
+		return
+	}
+
 	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
 	if err != nil {
 		SendError(w, r, invalidIDErr, http.StatusNotFound)
