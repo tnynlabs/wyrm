@@ -9,14 +9,16 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/tnynlabs/wyrm/pkg/devices"
+	"github.com/tnynlabs/wyrm/pkg/endpoints"
 	"github.com/tnynlabs/wyrm/pkg/http/rest"
 	"github.com/tnynlabs/wyrm/pkg/http/rest/middleware"
 	"github.com/tnynlabs/wyrm/pkg/projects"
 	"github.com/tnynlabs/wyrm/pkg/storage/postgres"
+	"github.com/tnynlabs/wyrm/pkg/tunnels"
 	"github.com/tnynlabs/wyrm/pkg/users"
 )
 
-func main() {
+func main() {<<<<<<< tunnel-service
 	// Load environment variables from .env file
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -39,6 +41,15 @@ func main() {
 	deviceRepo := postgres.CreateDeviceRepository(db)
 	deviceService := devices.CreateDeviceService(deviceRepo)
 	deviceHandler := rest.CreateDeviceHandler(deviceService)
+
+	endpointRepo := postgres.CreateEndpointRepository(db)
+	endpointService := endpoints.CreateEndpointService(endpointRepo)
+	endpointHandler := rest.CreateEndpointHandler(endpointService)
+
+	tunnel_host := os.Getenv("TUNNEL_HOST")
+	tunnel_port := os.Getenv("TUNNEL_PORT")
+	tunnelService := tunnels.CreateHttpGrpcService(tunnel_host + ":" + tunnel_port)
+	grpcHandler := rest.CreateGrpcHandler(tunnelService)
 
 	r := chi.NewRouter()
 
@@ -80,6 +91,17 @@ func main() {
 			r.Get("/", deviceHandler.Get)
 			r.Patch("/", deviceHandler.Update)
 			r.Delete("/", deviceHandler.Delete)
+
+			r.Post("/endpoints", endpointHandler.Create)
+			r.Get("/endpoints", endpointHandler.GetbyDeviceID)
+
+			r.Get("/invoke/{pattern}", grpcHandler.InvokeDevice)
+		})
+
+		r.Route("/endpoints/{endpoint_id}", func(r chi.Router) {
+			r.Get("/", endpointHandler.Get)
+			r.Patch("/", endpointHandler.Update)
+			r.Delete("/", endpointHandler.Delete)
 		})
 	})
 

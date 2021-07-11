@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option go_package = "github.com/tnynlabs/wyrm-tunnel/pkg/manager/protobuf";
+
+package wyrm.tunnel;
+
+import "google/protobuf/empty.proto";
+
+service TunnelManager {
+    rpc RevokeDevice(RevokeRequest) returns (google.protobuf.Empty) {}
+    rpc InvokeDevice(InvokeRequest) returns (InvokeResponse) {}
+}
+
+message RevokeRequest {
+    int64 device_id = 1;
+}
+
+message InvokeRequest {
+    int64 device_id = 1;
+    string pattern = 2; 
+    string data = 3;
+}
+
+message InvokeResponse {
+    string data = 1;
+}

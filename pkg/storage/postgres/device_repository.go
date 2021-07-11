@@ -102,7 +102,7 @@ func (dR DeviceRepository) Update(deviceID int64, d devices.Device) (*devices.De
 	return user, nil
 }
 
-func (dR DeviceRepository) Delete(deviceID int64) error {
+func (dR *DeviceRepository) Delete(deviceID int64) error {
 	const sqlStmt = `
 		DELETE FROM devices
 		WHERE id = $1
@@ -120,7 +120,7 @@ func (dR DeviceRepository) Delete(deviceID int64) error {
 	return nil
 }
 
-func (dR DeviceRepository) GetByProjectID(projectID int64) ([]devices.Device, error) {
+func (dR *DeviceRepository) GetByProjectID(projectID int64) ([]devices.Device, error) {
 	devicesSQL := []deviceSQL{}
 	const sqlStmt = `
 		SELECT id, project_id, display_name, auth_key, description, created_at 
