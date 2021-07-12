@@ -29,6 +29,15 @@ services:
       DB_PORT: 5432
       TUNNEL_HOST: wyrm-tunnel
       TUNNEL_PORT: 5050
+      WYRM_DEV: 1
+
+  wyrm-ui:
+    image: tnynlabs/wyrm-ui
+    restart: on-failure
+    ports:
+      - "80:80"
+    depends_on:
+      - "wyrm-api"
 
   wyrm-tunnel:
     image: tnynlabs/wyrm-tunnel
