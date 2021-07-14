@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS fkIdx_38 ON devices
 /* Endpoints Table */
 CREATE TABLE IF NOT EXISTS endpoints
 (
- "id"           int NOT NULL,
+ "id"           bigserial NOT NULL,
  device_id    int NOT NULL,
  display_name text NOT NULL,
  description  text NULL,

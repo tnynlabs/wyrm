@@ -149,6 +149,7 @@ func toEndpoint(epSQL endpointSQL) *endpoints.Endpoint {
 		Description: epSQL.Description.String,
 		DisplayName: epSQL.DisplayName.String,
 		DeviceID:    epSQL.DeviceID.Int64,
+		Pattern:     epSQL.Pattern.String,
 	}
 }
 
@@ -171,6 +172,10 @@ func fromEndpoint(ep endpoints.Endpoint) *endpointSQL {
 	endpointData.DisplayName = sql.NullString{
 		String: ep.DisplayName,
 		Valid:  ep.DisplayName != "",
+	}
+	endpointData.Pattern = sql.NullString{
+		String: ep.Pattern,
+		Valid:  ep.Pattern != "",
 	}
 
 	return &endpointData
