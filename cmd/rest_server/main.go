@@ -13,8 +13,9 @@ import (
 	"github.com/tnynlabs/wyrm/pkg/http/rest"
 	"github.com/tnynlabs/wyrm/pkg/http/rest/middleware"
 	"github.com/tnynlabs/wyrm/pkg/projects"
+	"github.com/tnynlabs/wyrm/pkg/pipelines"
 	"github.com/tnynlabs/wyrm/pkg/storage/postgres"
-	"github.com/tnynlabs/wyrm/pkg/tunnels"
+	// "github.com/tnynlabs/wyrm/pkg/tunnels"
 	"github.com/tnynlabs/wyrm/pkg/users"
 )
 
@@ -48,10 +49,14 @@ func main() {
 	endpointService := endpoints.CreateEndpointService(endpointRepo)
 	endpointHandler := rest.CreateEndpointHandler(endpointService)
 
-	tunnel_host := os.Getenv("TUNNEL_HOST")
-	tunnel_port := os.Getenv("TUNNEL_PORT")
-	tunnelService := tunnels.CreateHttpGrpcService(tunnel_host + ":" + tunnel_port)
-	grpcHandler := rest.CreateGrpcHandler(tunnelService)
+	pipelineRepo := postgres.CreatePipelineRepository(db)
+	pipelineService := pipelines.CreateService(pipelineRepo)
+	pipelineHandler := rest.CreatePipelineHandler(pipelineService, projectService)
+
+	// tunnel_host := os.Getenv("TUNNEL_HOST")
+	// tunnel_port := os.Getenv("TUNNEL_PORT")
+	// tunnelService := tunnels.CreateHttpGrpcService(tunnel_host + ":" + tunnel_port)
+	// grpcHandler := rest.CreateGrpcHandler(tunnelService)
 
 	r := chi.NewRouter()
 
@@ -87,8 +92,17 @@ func main() {
 
 			r.Post("/devices", deviceHandler.Create)
 			r.Get("/devices", deviceHandler.GetByProjectID)
-		})
 
+			r.Post("/pipelines", pipelineHandler.Create)
+			r.Get("/pipelines", pipelineHandler.GetByProjectID)
+		})
+		r.Route("/pipelines/{pipelineID}",func (r chi.Router) {
+			r.Use(middleware.Auth(userService))
+			r.Get("/", pipelineHandler.Get)
+			r.Patch("/", pipelineHandler.Update)
+			r.Delete("/", pipelineHandler.Delete)
+
+		})
 		r.Route("/devices/{deviceID}", func(r chi.Router) {
 			r.Get("/", deviceHandler.Get)
 			r.Patch("/", deviceHandler.Update)
@@ -97,7 +111,7 @@ func main() {
 			r.Post("/endpoints", endpointHandler.Create)
 			r.Get("/endpoints", endpointHandler.GetbyDeviceID)
 
-			r.Get("/invoke/{pattern}", grpcHandler.InvokeDevice)
+			// r.Get("/invoke/{pattern}", grpcHandler.InvokeDevice)
 		})
 
 		r.Route("/endpoints/{endpoint_id}", func(r chi.Router) {
