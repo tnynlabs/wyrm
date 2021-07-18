@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/tnynlabs/wyrm/pkg/pipelines"
@@ -27,7 +26,6 @@ func (h *PipelineHandler) Get(w http.ResponseWriter, r *http.Request) {
 		SendError(w, r, invalidIDErr, http.StatusNotFound)
 		return
 	}
-	fmt.Println(pipelineID)
 	pipeline, err := h.pipelineService.GetByID(pipelineID)
 	if err != nil {
 		serviceErr := utils.ToServiceErr(err)
@@ -90,20 +88,17 @@ func (h *PipelineHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PipelineHandler) Update(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Handler yoo")
 	pipelineID, err := strconv.ParseInt(chi.URLParam(r, "pipelineID"), 10, 64)
 	if err != nil {
 		SendError(w, r, invalidIDErr, http.StatusNotFound)
 		return
 	}
-	fmt.Println("Handler yoo 1")
 	pipelineData := pipelineRest{}
 	err = render.DecodeJSON(r.Body, &pipelineData)
 	if err != nil {
 		SendInvalidJSONErr(w, r)
 		return
 	}
-	fmt.Println("Handler yoo 2")
 	pipeline, err := h.pipelineService.Update(pipelineID, *toPipeline(pipelineData))
 	if err != nil {
 		serviceErr := utils.ToServiceErr(err)
@@ -126,7 +121,6 @@ func (h *PipelineHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PipelineHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Handler yo")
 	pipelineID,err := strconv.ParseInt(chi.URLParam(r, "pipelineID"), 10, 64)
 	if err != nil {
 		SendError(w, r, invalidIDErr, http.StatusNotFound)
