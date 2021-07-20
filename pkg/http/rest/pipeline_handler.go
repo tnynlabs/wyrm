@@ -4,10 +4,12 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/tnynlabs/wyrm/pkg/pipelines"
 	"github.com/tnynlabs/wyrm/pkg/projects"
+	"github.com/tnynlabs/wyrm/pkg/users"
 	"github.com/tnynlabs/wyrm/pkg/utils"
 )
 
@@ -68,6 +70,14 @@ func (h *PipelineHandler) Create(w http.ResponseWriter, r *http.Request) {
 		SendInvalidJSONErr(w, r)
 		return
 	}
+
+	user, ok := r.Context().Value(UserCtxKey{}).(*users.User)
+	if !ok {
+		SendUnexpectedErr(w, r)
+		return
+	}
+
+	pipelineData.CreatedBy = &user.ID
 	pipelineData.ProjectID = &project.ID
 	pipeline, err := h.pipelineService.Create(*toPipeline(pipelineData))
 	if err != nil {
@@ -112,7 +122,7 @@ func (h *PipelineHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	
+
 	result := &map[string]interface{}{
 		"pipeline": fromPipeline(*pipeline),
 	}
@@ -121,7 +131,7 @@ func (h *PipelineHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PipelineHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	pipelineID,err := strconv.ParseInt(chi.URLParam(r, "pipelineID"), 10, 64)
+	pipelineID, err := strconv.ParseInt(chi.URLParam(r, "pipelineID"), 10, 64)
 	if err != nil {
 		SendError(w, r, invalidIDErr, http.StatusNotFound)
 		return
@@ -142,7 +152,7 @@ func (h *PipelineHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PipelineHandler) GetByProjectID(w http.ResponseWriter, r *http.Request) {
-	projectID,err := strconv.ParseInt(chi.URLParam(r, "projectID"), 10, 64)
+	projectID, err := strconv.ParseInt(chi.URLParam(r, "projectID"), 10, 64)
 	if err != nil {
 		SendError(w, r, invalidIDErr, http.StatusNotFound)
 		return
@@ -156,7 +166,7 @@ func (h *PipelineHandler) GetByProjectID(w http.ResponseWriter, r *http.Request)
 		default:
 			SendUnexpectedErr(w, r)
 		}
-		return 
+		return
 	}
 
 	restPipelines := make([]*pipelineRest, len(projectPipelines))

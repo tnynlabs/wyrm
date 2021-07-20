@@ -548,9 +548,11 @@ paths:
                   type: string
                 project_id:
                   type: integer
+                data:
+                  type: string
               required:
                 - display_name
-                - description
+                - data
       responses:
         "200":
           description: Pipeline created
