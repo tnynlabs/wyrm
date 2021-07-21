@@ -12,6 +12,7 @@ import (
 	"github.com/tnynlabs/wyrm/pkg/endpoints"
 	"github.com/tnynlabs/wyrm/pkg/http/rest"
 	"github.com/tnynlabs/wyrm/pkg/http/rest/middleware"
+	"github.com/tnynlabs/wyrm/pkg/pipelines"
 	"github.com/tnynlabs/wyrm/pkg/projects"
 	"github.com/tnynlabs/wyrm/pkg/storage/postgres"
 	"github.com/tnynlabs/wyrm/pkg/tunnels"
@@ -47,6 +48,10 @@ func main() {
 	endpointRepo := postgres.CreateEndpointRepository(db)
 	endpointService := endpoints.CreateEndpointService(endpointRepo)
 	endpointHandler := rest.CreateEndpointHandler(endpointService)
+
+	pipelineRepo := postgres.CreatePipelineRepository(db)
+	pipelineService := pipelines.CreateService(pipelineRepo)
+	pipelineHandler := rest.CreatePipelineHandler(pipelineService, projectService)
 
 	tunnel_host := os.Getenv("TUNNEL_HOST")
 	tunnel_port := os.Getenv("TUNNEL_PORT")
@@ -87,8 +92,17 @@ func main() {
 
 			r.Post("/devices", deviceHandler.Create)
 			r.Get("/devices", deviceHandler.GetByProjectID)
-		})
 
+			r.Post("/pipelines", pipelineHandler.Create)
+			r.Get("/pipelines", pipelineHandler.GetByProjectID)
+		})
+		r.Route("/pipelines/{pipelineID}", func(r chi.Router) {
+			r.Use(middleware.Auth(userService))
+			r.Get("/", pipelineHandler.Get)
+			r.Patch("/", pipelineHandler.Update)
+			r.Delete("/", pipelineHandler.Delete)
+
+		})
 		r.Route("/devices/{deviceID}", func(r chi.Router) {
 			r.Get("/", deviceHandler.Get)
 			r.Patch("/", deviceHandler.Update)

@@ -85,3 +85,23 @@ CREATE INDEX IF NOT EXISTS fkIdx_62 ON external_keys
 (
  created_by
 );
+
+CREATE TABLE IF NOT EXISTS pipelines
+(
+ "id"         bigserial NOT NULL,
+ project_id   int NOT NULL,
+ display_name text NOT NULL,
+ data     text NOT NULL,
+ description  text NULL,
+ created_at   date NOT NULL,
+ updated_at   date,
+ created_by int NOT NULL,
+ CONSTRAINT PK_pipelines PRIMARY KEY ( "id" ),
+ CONSTRAINT FK_73 FOREIGN KEY ( created_by ) REFERENCES users ( "id" ),
+ CONSTRAINT FK_75 FOREIGN KEY ( project_id ) REFERENCES projects ( "id" )
+);
+
+CREATE INDEX IF NOT EXISTS fkIdx_75 ON pipelines
+(
+ project_id
+);
