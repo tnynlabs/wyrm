@@ -116,7 +116,7 @@ func (epR *EndpointRepository) GetbyDeviceID(deviceID int64) ([]endpoints.Endpoi
 	FROM endpoints
 	WHERE device_id = $1
 	`
-	err := epR.db.Select(endpointsSQL, sqlStmt, deviceID)
+	err := epR.db.Select(&endpointsSQL, sqlStmt, deviceID)
 	if err != nil {
 		return nil, err
 	}

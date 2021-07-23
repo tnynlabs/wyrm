@@ -1,9 +1,14 @@
 package pipelines
 
 import (
+	"context"
 	"log"
 	"time"
+
+	"github.com/tnynlabs/wyrm/pkg/pipelines/protobuf"
 	"github.com/tnynlabs/wyrm/pkg/utils"
+
+	"google.golang.org/grpc"
 )
 
 type Pipeline struct {
@@ -31,14 +36,27 @@ type Service interface {
 	Create(p Pipeline) (*Pipeline, error)
 	Update(pipelineID int64, pipeline Pipeline) (*Pipeline, error)
 	Delete(pipelineID int64) error
+	RunPipeline(pipelineID int64, payload string) error
 }
 
 type service struct {
 	pipelineRepo Repository
+	client       protobuf.PipelineWorkerClient
 }
 
-func CreateService(repo Repository) Service {
-	return &service{repo}
+func CreateService(repo Repository, workerAddr string) (Service, error) {
+	log.Println((workerAddr))
+	conn, err := grpc.Dial(workerAddr, grpc.WithInsecure())
+	if err != nil {
+		log.Println("GRPC Server Error")
+		return nil, err
+	}
+	workerClient := protobuf.NewPipelineWorkerClient(conn)
+	svc := service{
+		pipelineRepo: repo,
+		client:       workerClient,
+	}
+	return &svc, nil
 }
 
 func (s *service) GetByID(pipelineID int64) (*Pipeline, error) {
@@ -58,10 +76,11 @@ func (s *service) GetByProjectID(projectID int64) ([]Pipeline, error) {
 	pipelines, err := s.pipelineRepo.GetByProjectID(projectID)
 	if err != nil {
 		return nil, &utils.ServiceErr{
-			Code: ProjectNotFoundCode,
+			Code:    ProjectNotFoundCode,
+			Message: "Invalid ID",
 		}
 	}
-	
+
 	return pipelines, nil
 }
 
@@ -105,7 +124,7 @@ func (s *service) Update(pipelineID int64, p Pipeline) (*Pipeline, error) {
 	updatedData := Pipeline{
 		DisplayName: p.DisplayName,
 		Description: p.Description,
-		Data: p.Data,
+		Data:        p.Data,
 	}
 	pipeline, err := s.pipelineRepo.Update(pipelineID, updatedData)
 	if err != nil {
@@ -117,15 +136,31 @@ func (s *service) Update(pipelineID int64, p Pipeline) (*Pipeline, error) {
 
 	return pipeline, nil
 }
-	
+
 func (s *service) Delete(pipelineID int64) error {
 	err := s.pipelineRepo.Delete(pipelineID)
 	if err != nil {
 		return &utils.ServiceErr{
-			Code: PipelineNotFoundCode,
+			Code:    PipelineNotFoundCode,
 			Message: "Invalid ID",
 		}
 	}
 	return nil
 }
 
+func (s *service) RunPipeline(pipelineID int64, payload string) error {
+	pipelineRequest := protobuf.PipelineRequest{
+		PipelineId: pipelineID,
+		Payload:    payload,
+	}
+
+	_, err := s.client.RunPipeline(context.Background(), &pipelineRequest)
+	if err != nil {
+		return &utils.ServiceErr{
+			Code:    WorkerConnectionErrorCode,
+			Message: "Pipeline run failed",
+		}
+	}
+
+	return nil
+}

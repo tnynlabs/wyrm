@@ -29,6 +29,8 @@ services:
       DB_PORT: 5432
       TUNNEL_HOST: wyrm-tunnel
       TUNNEL_PORT: 5050
+      PIPELINE_HOST: wyrm-pipeline
+      PIPELINE_PORT: 5053
       WYRM_DEV: 1
 
   wyrm-ui:
@@ -54,6 +56,22 @@ services:
       DB_NAME: dev
       DB_PORT: 5432
 
+  wyrm-pipeline:
+    image: tnynlabs/wyrm-pipeline
+    restart: on-failure
+    ports:
+      - "5053:5053"
+    depends_on:
+      - "postgres"
+    environment:
+      DB_HOST: postgres
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: dev
+      DB_PORT: 5432
+      WYRM_API_HOST: wyrm-api
+      WYRM_API_PORT: 8080
+
   pgadmin:
     image: dpage/pgadmin4:4.18
     restart: always
@@ -67,6 +85,8 @@ services:
       - pgadmin-data:/var/lib/pgadmin
     links:
       - "postgres:pgsql-server"
+    logging:
+      driver: none
 
 networks:
   dockerNet:

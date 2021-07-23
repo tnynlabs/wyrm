@@ -30,6 +30,7 @@ func (gHandler *GrpcHandler) InvokeDevice(w http.ResponseWriter, r *http.Request
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		SendUnexpectedErr(w, r)
+		return
 	}
 
 	invokeRequest := string(body[:])
@@ -43,6 +44,7 @@ func (gHandler *GrpcHandler) InvokeDevice(w http.ResponseWriter, r *http.Request
 		default:
 			SendUnexpectedErr(w, r)
 		}
+		return
 	}
 
 	result := &map[string]interface{}{

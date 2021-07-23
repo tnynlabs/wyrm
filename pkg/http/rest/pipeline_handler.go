@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -161,7 +163,7 @@ func (h *PipelineHandler) GetByProjectID(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		serviceErr := utils.ToServiceErr(err)
 		switch serviceErr.Code {
-		case pipelines.PipelineNotFoundCode:
+		case pipelines.ProjectNotFoundCode:
 			SendError(w, r, *serviceErr, http.StatusNotFound)
 		default:
 			SendUnexpectedErr(w, r)
@@ -179,6 +181,52 @@ func (h *PipelineHandler) GetByProjectID(w http.ResponseWriter, r *http.Request)
 	}
 
 	SendResponse(w, r, result)
+}
+
+func (h *PipelineHandler) Webhook(w http.ResponseWriter, r *http.Request) {
+	pipelineID, err := strconv.ParseInt(chi.URLParam(r, "pipelineID"), 10, 64)
+	if err != nil {
+		SendError(w, r, invalidIDErr, http.StatusNotFound)
+		return
+	}
+
+	log.Println(h.pipelineService)
+	// Check that pipeline exists
+	_, err = h.pipelineService.GetByID(pipelineID)
+	log.Println(err)
+	if err != nil {
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case pipelines.PipelineNotFoundCode:
+			SendError(w, r, *serviceErr, http.StatusNotFound)
+		default:
+			SendUnexpectedErr(w, r)
+		}
+		return
+	}
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		SendUnexpectedErr(w, r)
+		return
+	}
+
+	payload := string(body[:])
+	log.Println(payload)
+	err = h.pipelineService.RunPipeline(pipelineID, payload)
+	if err != nil {
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case pipelines.WorkerConnectionErrorCode:
+			SendError(w, r, *serviceErr, http.StatusBadGateway)
+		default:
+			SendUnexpectedErr(w, r)
+		}
+		return
+	}
+
+	SendResponse(w, r, nil)
 }
 
 type pipelineRest struct {

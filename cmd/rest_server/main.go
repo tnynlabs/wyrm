@@ -49,18 +49,22 @@ func main() {
 	endpointService := endpoints.CreateEndpointService(endpointRepo)
 	endpointHandler := rest.CreateEndpointHandler(endpointService)
 
+	pipelineWorkerAddr := os.Getenv("PIPELINE_HOST") + ":" + os.Getenv("PIPELINE_PORT")
 	pipelineRepo := postgres.CreatePipelineRepository(db)
-	pipelineService := pipelines.CreateService(pipelineRepo)
+	pipelineService, err := pipelines.CreateService(pipelineRepo, pipelineWorkerAddr)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	pipelineHandler := rest.CreatePipelineHandler(pipelineService, projectService)
 
-	tunnel_host := os.Getenv("TUNNEL_HOST")
-	tunnel_port := os.Getenv("TUNNEL_PORT")
-	tunnelService := tunnels.CreateHttpGrpcService(tunnel_host + ":" + tunnel_port)
+	tunnelAddr := os.Getenv("TUNNEL_HOST") + ":" + os.Getenv("TUNNEL_PORT")
+	tunnelService := tunnels.CreateHttpGrpcService(tunnelAddr)
 	grpcHandler := rest.CreateGrpcHandler(tunnelService)
 
 	r := chi.NewRouter()
 
 	if devFlag := os.Getenv("WYRM_DEV"); devFlag == "1" {
+		log.SetFlags(log.LstdFlags | log.Lshortfile)
 		r.Use(cors.Handler(cors.Options{
 			AllowedOrigins:   []string{"https://*", "http://*"},
 			AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
@@ -97,11 +101,11 @@ func main() {
 			r.Get("/pipelines", pipelineHandler.GetByProjectID)
 		})
 		r.Route("/pipelines/{pipelineID}", func(r chi.Router) {
-			r.Use(middleware.Auth(userService))
+			// r.Use(middleware.Auth(userService))
 			r.Get("/", pipelineHandler.Get)
 			r.Patch("/", pipelineHandler.Update)
 			r.Delete("/", pipelineHandler.Delete)
-
+			r.HandleFunc("/webhook", pipelineHandler.Webhook)
 		})
 		r.Route("/devices/{deviceID}", func(r chi.Router) {
 			r.Get("/", deviceHandler.Get)
@@ -111,7 +115,7 @@ func main() {
 			r.Post("/endpoints", endpointHandler.Create)
 			r.Get("/endpoints", endpointHandler.GetbyDeviceID)
 
-			r.Get("/invoke/{pattern}", grpcHandler.InvokeDevice)
+			r.HandleFunc("/invoke/{pattern}", grpcHandler.InvokeDevice)
 		})
 
 		r.Route("/endpoints/{endpoint_id}", func(r chi.Router) {
