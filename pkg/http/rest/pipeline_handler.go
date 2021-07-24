@@ -219,7 +219,7 @@ func (h *PipelineHandler) Webhook(w http.ResponseWriter, r *http.Request) {
 		serviceErr := utils.ToServiceErr(err)
 		switch serviceErr.Code {
 		case pipelines.WorkerConnectionErrorCode:
-			SendError(w, r, *serviceErr, http.StatusBadGateway)
+			SendError(w, r, *serviceErr, http.StatusBadRequest)
 		default:
 			SendUnexpectedErr(w, r)
 		}
@@ -268,6 +268,7 @@ func fromPipeline(p pipelines.Pipeline) *pipelineRest {
 		DisplayName: &p.DisplayName,
 		Data:        &p.Data,
 		Description: &p.Description,
+		ProjectID:   &p.ProjectID,
 		CreatedAt:   &p.CreatedAt,
 		CreatedBy:   &p.CreatedBy,
 	}

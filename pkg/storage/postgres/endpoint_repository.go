@@ -70,6 +70,7 @@ func (epR *EndpointRepository) Update(endpointID int64, ep endpoints.Endpoint) (
 			device_id = COALESCE(:device_id, device_id),
 			display_name = COALESCE(:display_name, display_name),
 			description = COALESCE(:description, description),
+			pattern = COALESCE(:pattern, pattern),
 			updated_at = COALESCE(:updated_at, updated_at)
 		WHERE id = :id`
 

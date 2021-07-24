@@ -21,6 +21,7 @@ services:
     depends_on:
       - "postgres"
       - "wyrm-tunnel"
+      - "wyrm-pipeline"
     environment:
       DB_HOST: postgres
       DB_USER: admin

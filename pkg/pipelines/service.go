@@ -2,6 +2,7 @@ package pipelines
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -156,9 +157,10 @@ func (s *service) RunPipeline(pipelineID int64, payload string) error {
 
 	_, err := s.client.RunPipeline(context.Background(), &pipelineRequest)
 	if err != nil {
+		errMsg := fmt.Sprintf("Pipeline run failed (%v)", err)
 		return &utils.ServiceErr{
 			Code:    WorkerConnectionErrorCode,
-			Message: "Pipeline run failed",
+			Message: errMsg,
 		}
 	}
 

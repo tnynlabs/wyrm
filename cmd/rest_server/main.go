@@ -118,7 +118,7 @@ func main() {
 			r.HandleFunc("/invoke/{pattern}", grpcHandler.InvokeDevice)
 		})
 
-		r.Route("/endpoints/{endpoint_id}", func(r chi.Router) {
+		r.Route("/endpoints/{endpointID}", func(r chi.Router) {
 			r.Get("/", endpointHandler.Get)
 			r.Patch("/", endpointHandler.Update)
 			r.Delete("/", endpointHandler.Delete)
