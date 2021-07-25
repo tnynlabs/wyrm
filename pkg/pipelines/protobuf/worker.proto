@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "github.com/tnynlabs/wyrm/pkg/pipelines/protobuf";
+
+package wyrm.pipeline;
+
+service PipelineWorker {
+    rpc RunPipeline(PipelineRequest) returns (PipelineResponse) {}
+}
+
+message PipelineRequest {
+    int64 pipeline_id = 1;
+    string payload = 2;
+}
+
+message PipelineResponse {
+
+};

@@ -1,0 +1,99 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:10
+    command: postgres -c 'max_connections=1000'
+    restart: on-failure
+    environment:
+      POSTGRES_DB: dev
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  wyrm-api:
+    image: tnynlabs/wyrm
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "postgres"
+      - "wyrm-tunnel"
+      - "wyrm-pipeline"
+    environment:
+      DB_HOST: postgres
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: dev
+      DB_PORT: 5432
+      TUNNEL_HOST: wyrm-tunnel
+      TUNNEL_PORT: 5050
+      PIPELINE_HOST: wyrm-pipeline
+      PIPELINE_PORT: 5053
+      WYRM_DEV: 1
+
+  wyrm-ui:
+    image: tnynlabs/wyrm-ui
+    restart: on-failure
+    ports:
+      - "80:80"
+    depends_on:
+      - "wyrm-api"
+
+  wyrm-tunnel:
+    image: tnynlabs/wyrm-tunnel
+    restart: on-failure
+    ports:
+      - "5050:5050"
+      - "5051:5051"
+    depends_on:
+      - "postgres"
+    environment:
+      DB_HOST: postgres
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: dev
+      DB_PORT: 5432
+
+  wyrm-pipeline:
+    image: tnynlabs/wyrm-pipeline
+    restart: on-failure
+    ports:
+      - "5053:5053"
+    depends_on:
+      - "postgres"
+    environment:
+      DB_HOST: postgres
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: dev
+      DB_PORT: 5432
+      WYRM_API_HOST: wyrm-api
+      WYRM_API_PORT: 8080
+
+  pgadmin:
+    image: dpage/pgadmin4:4.18
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "8081:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    links:
+      - "postgres:pgsql-server"
+    logging:
+      driver: none
+
+networks:
+  dockerNet:
+    driver: bridge
+
+volumes:
+  pgadmin-data:
+  postgres:
+    external: false

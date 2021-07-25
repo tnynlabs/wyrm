@@ -1,0 +1,1 @@
+docker-compose --env-file .env -f docker/production/docker-compose-wyrm.yaml up

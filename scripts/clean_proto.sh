@@ -1,1 +1,2 @@
-rm pkg/tunnel_service/manager/*.pb*
+rm pkg/tunnels/protobuf/*.pb*
+rm pkg/pipelines/protobuf/*.pb*

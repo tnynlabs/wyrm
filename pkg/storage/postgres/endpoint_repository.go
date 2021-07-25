@@ -70,6 +70,7 @@ func (epR *EndpointRepository) Update(endpointID int64, ep endpoints.Endpoint) (
 			device_id = COALESCE(:device_id, device_id),
 			display_name = COALESCE(:display_name, display_name),
 			description = COALESCE(:description, description),
+			pattern = COALESCE(:pattern, pattern),
 			updated_at = COALESCE(:updated_at, updated_at)
 		WHERE id = :id`
 
@@ -116,7 +117,7 @@ func (epR *EndpointRepository) GetbyDeviceID(deviceID int64) ([]endpoints.Endpoi
 	FROM endpoints
 	WHERE device_id = $1
 	`
-	err := epR.db.Select(endpointsSQL, sqlStmt, deviceID)
+	err := epR.db.Select(&endpointsSQL, sqlStmt, deviceID)
 	if err != nil {
 		return nil, err
 	}
@@ -149,6 +150,7 @@ func toEndpoint(epSQL endpointSQL) *endpoints.Endpoint {
 		Description: epSQL.Description.String,
 		DisplayName: epSQL.DisplayName.String,
 		DeviceID:    epSQL.DeviceID.Int64,
+		Pattern:     epSQL.Pattern.String,
 	}
 }
 
@@ -171,6 +173,10 @@ func fromEndpoint(ep endpoints.Endpoint) *endpointSQL {
 	endpointData.DisplayName = sql.NullString{
 		String: ep.DisplayName,
 		Valid:  ep.DisplayName != "",
+	}
+	endpointData.Pattern = sql.NullString{
+		String: ep.Pattern,
+		Valid:  ep.Pattern != "",
 	}
 
 	return &endpointData

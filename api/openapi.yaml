@@ -524,6 +524,168 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Endpoint'
+                
+                
+  /projects/{project_id}/pipelines:
+    post:
+      operationId: create_pipeline
+      tags:
+      - pipelines
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/ProjectParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name:
+                  type: string
+                description:
+                  type: string
+                project_id:
+                  type: integer
+                data:
+                  type: string
+              required:
+                - display_name
+                - data
+      responses:
+        "200":
+          description: Pipeline created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  pipeline:
+                    $ref: '#/components/schemas/Pipeline'
+    get:
+      operationId: get_pipelines
+      tags:
+      - pipelines
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/ProjectParam'
+      responses:
+        "200":
+          description: |
+            Project pipelines returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  pipelines:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Pipeline'
+                      
+  /pipelines/{pipeline_id}/webhook:
+    get:
+      operationId: get_pipeline_webhook
+      tags:
+      - pipelines
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PipelineParam'
+      responses:
+        "200":
+          description: |
+            TO BE ADDED.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+  
+  /pipelines/{pipeline_id}:
+    get:
+      operationId: get_pipeline
+      tags:
+      - pipelines
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PipelineParam'
+      responses:
+        "200":
+          description: |
+            Pipeline found successfully.
+            Pipeline returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  pipeline:
+                    $ref: '#/components/schemas/Pipeline'
+    delete:
+      operationId: delete_pipeline
+      tags:
+      - pipelines
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PipelineParam'
+      responses:
+        "200":
+          description: |
+            Pipeline deleted successfully.
+            Empty response returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+    patch:
+      operationId: update_pipeline
+      tags:
+      - pipelines
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PipelineParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pipeline'
+      responses:
+        "200":
+          description: |
+            Pipeline updated successfully.
+            Updated Pipeline returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/Error'
+                  pipeline:
+                    $ref: '#/components/schemas/Pipeline'              
+                
+                
+                
+                
+                
 components:
   parameters:
     UserParam:
@@ -547,6 +709,12 @@ components:
     EndpointParam:
       in: path
       name: endpoint_id
+      required: true
+      schema:
+        type: integer
+    PipelineParam:
+      in: path
+      name: pipeline_id
       required: true
       schema:
         type: integer
@@ -613,6 +781,25 @@ components:
           type: string
         updated_at:
           type: string
+    Pipeline:
+      type: object
+      properties:
+        id:
+          type: integer
+        display_name:
+          type: string
+        description:
+          type: string
+        data:
+          type: string
+        project_id:
+          type: integer
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        created_by:
+          type: integer
     Error:
       type: object
       properties:
