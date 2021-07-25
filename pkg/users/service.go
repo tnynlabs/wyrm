@@ -65,7 +65,7 @@ type Service interface {
 	CreateWithPwd(u User, pwd string) (*User, error)
 	Update(userID int64, u User) (*User, error)
 	Delete(userID int64) error
-
+	GetByEmail(email string) (*User, error)
 	AuthWithEmailPwd(email, pwd string) (*User, error)
 }
 
@@ -218,6 +218,18 @@ func (s *service) AuthWithEmailPwd(email, pwd string) (*User, error) {
 		return nil, &utils.ServiceErr{
 			Code:    InvalidInputCode,
 			Message: "Invalid email or password",
+		}
+	}
+
+	return user, nil
+}
+
+func (s *service) GetByEmail(email string) (*User, error) {
+	user, err := s.userRepo.GetByEmail(email)
+	if err != nil {
+		return nil, &utils.ServiceErr{
+			Code:    InvalidInputCode,
+			Message: "Invalid email",
 		}
 	}
 

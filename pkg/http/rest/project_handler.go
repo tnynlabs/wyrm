@@ -135,6 +135,9 @@ type createProjectRequest struct {
 	DisplayName string `json:"display_name"`
 	Description string `json:"description"`
 }
+type addCollaboratorRequest struct {
+	Email string `json:"email"`
+}
 
 func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
@@ -186,6 +189,46 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 	SendResponse(w, r, result)
 }
 
+func (h *ProjectHandler) AddCollaborator(w http.ResponseWriter, r *http.Request) {
+	projectID, err := strconv.ParseInt(chi.URLParam(r, "projectID"), 10, 64)
+	if err != nil {
+		SendError(w, r, invalidIDErr, http.StatusNotFound)
+		return
+	}
+
+	req := addCollaboratorRequest{}
+	err = render.DecodeJSON(r.Body, &req)
+	if err != nil {
+		SendInvalidJSONErr(w, r)
+		return
+	}
+
+	user, err := h.userService.GetByEmail(req.Email)
+	if err != nil {
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case users.UserNotFoundCode:
+			SendError(w, r, *serviceErr, http.StatusNotFound)
+		default:
+			SendUnexpectedErr(w, r)
+		}
+		return
+	}
+
+	err = h.projectService.AddCollaborator(user.ID, projectID)
+	if err != nil {
+		serviceErr := utils.ToServiceErr(err)
+		switch serviceErr.Code {
+		case projects.InvalidInputCode:
+			SendError(w, r, *serviceErr, http.StatusBadRequest)
+		default:
+			SendUnexpectedErr(w, r)
+		}
+		return
+	}
+
+	SendResponse(w, r, nil)
+}
 type projectRest struct {
 	ID          *int64     `json:"id,omitempty"`
 	CreatedBy   *int64     `json:"created_by,omitempty"`

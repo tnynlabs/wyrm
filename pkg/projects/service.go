@@ -22,6 +22,7 @@ type Repository interface {
 	Create(p Project) (*Project, error)
 	Update(projectID int64, p Project) (*Project, error)
 	Delete(projectID int64) error
+	AddCollaborator(userID int64, projectID int64) error
 }
 
 type Service interface {
@@ -30,6 +31,7 @@ type Service interface {
 	Create(p Project) (*Project, error)
 	Update(projectID int64, p Project) (*Project, error)
 	Delete(projectID int64) error
+	AddCollaborator(userID int64, projectID int64) error
 }
 
 type service struct {
@@ -83,7 +85,18 @@ func (s *service) Create(p Project) (*Project, error) {
 
 	return newProject, nil
 }
-
+func (s *service) AddCollaborator(userID int64, projectID int64) error{
+	err := s.projectRepo.AddCollaborator(userID, projectID)
+	if err != nil {
+		log.Printf("Failed adding collaborator (error: %v)", err)
+		return &utils.ServiceErr{
+			Code:    utils.UnexpectedCode,
+			Message: "Failed adding collaborator",
+		}
+	}
+	
+	return nil
+}
 func (s *service) Update(projectID int64, p Project) (*Project, error) {
 	if p.DisplayName == "" {
 		return nil, &utils.ServiceErr{
