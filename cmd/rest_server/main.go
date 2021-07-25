@@ -93,6 +93,7 @@ func main() {
 			r.Get("/", projectHandler.Get)
 			r.Patch("/", projectHandler.Update)
 			r.Delete("/", projectHandler.Delete)
+			r.Post("/collaborators", projectHandler.AddCollaborator)
 
 			r.Post("/devices", deviceHandler.Create)
 			r.Get("/devices", deviceHandler.GetByProjectID)
